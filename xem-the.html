@@ -276,7 +276,6 @@
 <script>
   const params = new URLSearchParams(location.search);
   const imgSrc = params.get('img');
-  const mucNum = params.get('muc');
   const title  = params.get('title');
   // 'from' = tên file trang danh sách đã mở thẻ này (VD: cong-dien-3.html).
   // Dùng để nút "Quay lại" luôn trỏ đúng trang gốc, kể cả khi không có lịch sử trình duyệt.
@@ -291,10 +290,9 @@
     document.getElementById('bgImg').style.backgroundImage = `url('${imgSrc}')`;
     document.getElementById('cardArt').style.backgroundImage = `url('${imgSrc}')`;
 
-    if(mucNum || title){
+    if(title){
       const box = document.getElementById('labelBox');
       box.style.display = '';
-      if(mucNum) document.getElementById('labelNum').textContent = 'Mục ' + String(mucNum).padStart(2,'0');
       if(title) document.getElementById('labelTitle').textContent = title;
     }
   }
