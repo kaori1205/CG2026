@@ -27,9 +27,16 @@
     margin:0; padding:0;
     height:100%;
     overflow:hidden;
-    background:var(--void);
     font-family:'Source Sans 3', sans-serif;
     color:var(--text-light);
+  }
+  html{
+    background:var(--void);
+  }
+  body{
+    background:transparent; /* quan trọng: không đặt nền đặc ở body,
+      nếu không nó sẽ vẽ đè lên trên các lớp position:fixed có z-index âm
+      (.bg-crop, .bg-overlay) và che mất ảnh nền mờ phía sau */
   }
 
   @media (prefers-reduced-motion: reduce){
