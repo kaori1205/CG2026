@@ -81,10 +81,10 @@
     display:inline-flex;
     align-items:center;
     gap:8px;
-    background:rgba(10,5,3,0.4);
+    background: var(--btn-bg, rgba(10,5,3,0.4));
     backdrop-filter: blur(6px);
-    border:1px solid rgba(244,211,94,0.4);
-    color:var(--gold);
+    border:1px solid var(--btn-border, rgba(244,211,94,0.4));
+    color: var(--btn-text, var(--gold));
     font-family:'IBM Plex Mono', monospace;
     font-size:12px;
     letter-spacing:0.06em;
@@ -93,14 +93,32 @@
     border-radius:30px;
     cursor:pointer;
     text-decoration:none;
-    transition: all 0.25s ease;
+    transition: all 0.25s ease, background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
   }
   .back-btn:hover{
-    background: rgba(232,56,13,0.18);
+    background: var(--btn-bg-hover, rgba(232,56,13,0.18));
     border-color: var(--flame);
     color: var(--flame);
   }
+  /* Nền tối (ảnh sáng màu) -> khung/nút đậm hơn để nổi trên nền sáng */
+  .back-btn.is-light{
+    --btn-bg: rgba(10,5,3,0.55);
+    --btn-border: rgba(10,5,3,0.55);
+    --btn-text: #f7f1e4;
+    --btn-bg-hover: rgba(10,5,3,0.72);
+  }
+  /* Nền sáng (ảnh tối màu) -> khung/nút giữ kiểu kính mờ vàng như gốc */
+  .back-btn.is-dark{
+    --btn-bg: rgba(10,5,3,0.4);
+    --btn-border: rgba(244,211,94,0.45);
+    --btn-text: var(--gold);
+    --btn-bg-hover: rgba(232,56,13,0.18);
+  }
   .label{
+    display:flex;
+    flex-direction:column;
+    align-items:flex-end;
+    gap:6px;
     text-align:right;
     font-family:'IBM Plex Mono', monospace;
     font-size:11px;
@@ -109,24 +127,37 @@
     line-height:1.5;
   }
   .label .num{
+    order:2;
     display:inline-block;
     font-family:'Anton', sans-serif;
     color:var(--void);
     background: linear-gradient(135deg, var(--gold), var(--flame));
     padding:3px 9px;
     border-radius:3px;
-    margin-right:6px;
     letter-spacing:0.05em;
   }
   .label .title{
+    order:1;
     display:block;
-    margin-top:6px;
+    margin-top:0;
     font-family:'Playfair Display', serif;
     font-weight:900;
     font-size:15px;
-    color:var(--text-light);
+    color: var(--label-text, var(--text-light));
     letter-spacing:0.02em;
     text-transform:uppercase;
+    text-shadow: var(--label-shadow, 0 2px 10px rgba(0,0,0,0.75));
+    transition: color 0.4s ease, text-shadow 0.4s ease;
+  }
+  /* Nền ảnh sáng màu -> chữ chuyển sang tối để không bị mất chữ */
+  .label.is-light .title{
+    --label-text:#171310;
+    --label-shadow: 0 1px 6px rgba(255,255,255,0.7), 0 0 14px rgba(255,255,255,0.4);
+  }
+  /* Nền ảnh tối màu -> giữ chữ sáng như gốc */
+  .label.is-dark .title{
+    --label-text: var(--text-light);
+    --label-shadow: 0 2px 10px rgba(0,0,0,0.75);
   }
 
   /* ---------- Stage / card ---------- */
@@ -197,7 +228,7 @@
   }
   .card-art .art{
     position:absolute; inset:0;
-    background-size:contain;
+    background-size:cover;
     background-repeat:no-repeat;
     background-position:center;
   }
@@ -263,8 +294,8 @@
   <div class="bg-overlay"></div>
 
   <div class="top-bar">
-    <a class="back-btn" id="backBtn" href="cong-dien-hoi-ngo.html">← Quay lại bộ sưu tập</a>
-    <div class="label" id="labelBox" style="display:none;">
+    <a class="back-btn is-dark" id="backBtn" href="cong-dien-hoi-ngo.html">← Quay lại bộ sưu tập</a>
+    <div class="label is-dark" id="labelBox" style="display:none;">
       <span class="num" id="labelNum"></span>
       <span class="title" id="labelTitle"></span>
     </div>
@@ -308,6 +339,66 @@
       box.style.display = '';
       document.getElementById('labelTitle').textContent = title;
     }
+
+    applyAdaptiveTheme(imgSrc);
+  }
+
+  // ---------- Tự nhận diện độ sáng nền ảnh để đổi màu chữ/khung sáng-tối ----------
+  function averageLuminance(imageData){
+    const d = imageData.data;
+    let total = 0, count = 0;
+    for(let i = 0; i < d.length; i += 4){
+      const a = d[i + 3];
+      if(a < 10) continue; // bỏ pixel trong suốt
+      total += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      count++;
+    }
+    return count ? total / count : 200; // không đọc được -> coi như nền sáng (an toàn)
+  }
+
+  function setTheme(el, lum, threshold){
+    const isLight = lum > threshold;
+    el.classList.toggle('is-light', isLight);
+    el.classList.toggle('is-dark', !isLight);
+  }
+
+  function applyAdaptiveTheme(src){
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    const backEl = document.getElementById('backBtn');
+    const labelEl = document.getElementById('labelBox');
+
+    img.onload = () => {
+      try{
+        const cw = 160;
+        const ch = Math.max(1, Math.round(cw * (img.naturalHeight / img.naturalWidth)));
+        const canvas = document.createElement('canvas');
+        canvas.width = cw; canvas.height = ch;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, cw, ch);
+
+        // Chỉ lấy mẫu dải trên cùng (nơi thanh top-bar phủ lên),
+        // chia nửa trái (nút "Quay lại") và nửa phải (tên mục).
+        const bandH = Math.max(1, Math.round(ch * 0.22));
+        const halfW = Math.round(cw / 2);
+
+        const leftLum  = averageLuminance(ctx.getImageData(0, 0, halfW, bandH));
+        const rightLum = averageLuminance(ctx.getImageData(halfW, 0, cw - halfW, bandH));
+
+        const THRESHOLD = 150; // 0-255, nền sáng hơn mức này -> đổi sang chữ/khung tối
+        setTheme(backEl, leftLum, THRESHOLD);
+        setTheme(labelEl, rightLum, THRESHOLD);
+      }catch(err){
+        // Canvas bị chặn (CORS khi mở trực tiếp file:// chẳng hạn) -> giữ giao diện tối mặc định
+        backEl.classList.add('is-dark');
+        labelEl.classList.add('is-dark');
+      }
+    };
+    img.onerror = () => {
+      backEl.classList.add('is-dark');
+      labelEl.classList.add('is-dark');
+    };
+    img.src = src;
   }
 
   // Quay lại trang trước nếu có lịch sử (giữ nguyên vị trí cuộn),
