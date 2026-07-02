@@ -127,7 +127,7 @@
     line-height:1.5;
   }
   .label .num{
-    order:1;
+    order:2;
     display:inline-block;
     font-family:'Anton', sans-serif;
     color:var(--void);
@@ -137,7 +137,7 @@
     letter-spacing:0.05em;
   }
   .label .title{
-    order:2;
+    order:1;
     display:block;
     margin-top:0;
     font-family:'Playfair Display', serif;
@@ -344,22 +344,108 @@
   }
 
   // ---------- Tự nhận diện độ sáng nền ảnh để đổi màu chữ/khung sáng-tối ----------
-  function averageLuminance(imageData){
+  // Chuyển 1 kênh màu sRGB (0-255) sang giá trị linear theo chuẩn WCAG
+  function srgbChannelToLinear(c){
+    c = c / 255;
+    return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+  }
+
+  // Độ sáng tương đối (relative luminance) chuẩn WCAG, 0 = đen tuyệt đối, 1 = trắng tuyệt đối
+  function relativeLuminance(r, g, b){
+    return 0.2126 * srgbChannelToLinear(r) + 0.7152 * srgbChannelToLinear(g) + 0.0722 * srgbChannelToLinear(b);
+  }
+
+  function averageRelativeLuminance(imageData){
     const d = imageData.data;
     let total = 0, count = 0;
     for(let i = 0; i < d.length; i += 4){
       const a = d[i + 3];
       if(a < 10) continue; // bỏ pixel trong suốt
-      total += 0.299 * d[i] + 0.587 * d[i + 1] + 0.114 * d[i + 2];
+      total += relativeLuminance(d[i], d[i + 1], d[i + 2]);
       count++;
     }
-    return count ? total / count : 200; // không đọc được -> coi như nền sáng (an toàn)
+    return count ? total / count : 0.5;
   }
 
-  function setTheme(el, lum, threshold){
-    const isLight = lum > threshold;
-    el.classList.toggle('is-light', isLight);
-    el.classList.toggle('is-dark', !isLight);
+  // So sánh tỉ lệ tương phản thực tế giữa nền và chữ trắng/đen (công thức WCAG),
+  // chọn màu nào tương phản cao hơn -> chính xác và nhạy hơn nhiều so với ngưỡng cố định.
+  function shouldUseDarkText(bgLum){
+    const contrastWithWhite = 1.05 / (bgLum + 0.05);
+    const contrastWithBlack = (bgLum + 0.05) / 0.05;
+    return contrastWithBlack > contrastWithWhite;
+  }
+
+  // Map một hình chữ nhật trên MÀN HÌNH (getBoundingClientRect) sang toạ độ trên ẢNH GỐC,
+  // tái tạo đúng công thức background-size:cover mà .bg-img đang dùng
+  // (kể cả phần inset:-60px và transform scale(1.12) đang phóng to nền mờ).
+  function mapScreenRectToImageRect(rect, imgW, imgH){
+    const vw = window.innerWidth, vh = window.innerHeight;
+    const boxW = (vw + 120) * 1.12; // inset -60px mỗi cạnh + scale 1.12
+    const boxH = (vh + 120) * 1.12;
+
+    const scale = Math.max(boxW / imgW, boxH / imgH); // logic của background-size:cover
+    const scaledW = imgW * scale, scaledH = imgH * scale;
+
+    const boxLeft = (vw - boxW) / 2;
+    const boxTop  = (vh - boxH) / 2;
+    const imgLeft = boxLeft + (boxW - scaledW) / 2;
+    const imgTop  = boxTop  + (boxH - scaledH) / 2;
+
+    return {
+      left:   (rect.left   - imgLeft) / scale,
+      right:  (rect.right  - imgLeft) / scale,
+      top:    (rect.top    - imgTop)  / scale,
+      bottom: (rect.bottom - imgTop)  / scale
+    };
+  }
+
+  let cachedThemeImg = null;
+
+  function sampleLuminanceForElement(ctx, cw, ch, ratio, imgNaturalW, imgNaturalH, el){
+    const rect = el.getBoundingClientRect();
+    if(rect.width === 0 || rect.height === 0){
+      return averageRelativeLuminance(ctx.getImageData(0, 0, cw, ch));
+    }
+    const src = mapScreenRectToImageRect(rect, imgNaturalW, imgNaturalH);
+    let left   = Math.max(0, Math.min(cw - 1, Math.floor(src.left   * ratio)));
+    let top    = Math.max(0, Math.min(ch - 1, Math.floor(src.top    * ratio)));
+    let right  = Math.max(left + 1, Math.min(cw, Math.ceil(src.right  * ratio)));
+    let bottom = Math.max(top + 1,  Math.min(ch, Math.ceil(src.bottom * ratio)));
+    return averageRelativeLuminance(ctx.getImageData(left, top, right - left, bottom - top));
+  }
+
+  function recomputeTheme(){
+    if(!cachedThemeImg) return;
+    const img = cachedThemeImg;
+    const backEl = document.getElementById('backBtn');
+    const labelEl = document.getElementById('labelBox');
+    try{
+      const maxDim = 320;
+      const ratio = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
+      const cw = Math.max(1, Math.round(img.naturalWidth * ratio));
+      const ch = Math.max(1, Math.round(img.naturalHeight * ratio));
+      const canvas = document.createElement('canvas');
+      canvas.width = cw; canvas.height = ch;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, cw, ch);
+
+      const backLum = sampleLuminanceForElement(ctx, cw, ch, ratio, img.naturalWidth, img.naturalHeight, backEl);
+      const labelLum = (labelEl.style.display === 'none')
+        ? backLum
+        : sampleLuminanceForElement(ctx, cw, ch, ratio, img.naturalWidth, img.naturalHeight, labelEl);
+
+      const backDark = shouldUseDarkText(backLum);
+      backEl.classList.toggle('is-light', backDark);
+      backEl.classList.toggle('is-dark', !backDark);
+
+      const labelDark = shouldUseDarkText(labelLum);
+      labelEl.classList.toggle('is-light', labelDark);
+      labelEl.classList.toggle('is-dark', !labelDark);
+    }catch(err){
+      // Canvas bị chặn (CORS khi mở trực tiếp file:// chẳng hạn) -> giữ giao diện tối mặc định
+      backEl.classList.add('is-dark');
+      labelEl.classList.add('is-dark');
+    }
   }
 
   function applyAdaptiveTheme(src){
@@ -369,30 +455,8 @@
     const labelEl = document.getElementById('labelBox');
 
     img.onload = () => {
-      try{
-        const cw = 160;
-        const ch = Math.max(1, Math.round(cw * (img.naturalHeight / img.naturalWidth)));
-        const canvas = document.createElement('canvas');
-        canvas.width = cw; canvas.height = ch;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, cw, ch);
-
-        // Chỉ lấy mẫu dải trên cùng (nơi thanh top-bar phủ lên),
-        // chia nửa trái (nút "Quay lại") và nửa phải (tên mục).
-        const bandH = Math.max(1, Math.round(ch * 0.22));
-        const halfW = Math.round(cw / 2);
-
-        const leftLum  = averageLuminance(ctx.getImageData(0, 0, halfW, bandH));
-        const rightLum = averageLuminance(ctx.getImageData(halfW, 0, cw - halfW, bandH));
-
-        const THRESHOLD = 150; // 0-255, nền sáng hơn mức này -> đổi sang chữ/khung tối
-        setTheme(backEl, leftLum, THRESHOLD);
-        setTheme(labelEl, rightLum, THRESHOLD);
-      }catch(err){
-        // Canvas bị chặn (CORS khi mở trực tiếp file:// chẳng hạn) -> giữ giao diện tối mặc định
-        backEl.classList.add('is-dark');
-        labelEl.classList.add('is-dark');
-      }
+      cachedThemeImg = img;
+      recomputeTheme();
     };
     img.onerror = () => {
       backEl.classList.add('is-dark');
@@ -400,6 +464,12 @@
     };
     img.src = src;
   }
+
+  let resizeThemeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeThemeTimer);
+    resizeThemeTimer = setTimeout(recomputeTheme, 150);
+  });
 
   // Quay lại trang trước nếu có lịch sử (giữ nguyên vị trí cuộn),
   // nếu không có lịch sử (mở link trực tiếp, tab mới...) thì dùng href = fromPage ở trên.
