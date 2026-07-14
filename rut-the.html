@@ -143,13 +143,13 @@
   /* ---------- Rút bài kiểu xoè quạt (fan spread) ---------- */
   .fan-container{
     position:relative; width:100%; max-width:1200px; margin:34px auto 10px;
-    height: var(--fan-height, 300px); overflow-x:auto; overflow-y:visible;
+    height: var(--fan-height, 300px); overflow:visible;
   }
   .spread-slot{
     position:absolute; left:50%; bottom:0; width:var(--card-w); aspect-ratio:var(--card-ratio);
     margin-left: calc(var(--card-w) / -2); cursor:pointer;
-    transform-origin:50% 96%;
-    transition: transform 0.6s cubic-bezier(.16,.85,.24,1), opacity 0.45s ease;
+    transform-origin:50% 100%;
+    transition: transform 0.7s cubic-bezier(.19,1.15,.24,1), opacity 0.4s ease;
   }
   .spread-slot .card-back-face{
     position:relative; width:100%; height:100%; border-radius:var(--radius); overflow:hidden;
@@ -652,11 +652,15 @@ async function loadAllCards(){
   }
 
   statusText.innerHTML = `Đã nhận diện <strong>${ALL_CARDS.length}</strong> thẻ có ảnh thật trên <strong>${new Set(ALL_CARDS.map(c => c.pageFile)).size}</strong> công diễn.`;
-  hint.textContent = 'Nhấn "Trộn Card" rồi "Rút Card" để bắt đầu…';
 
   shuffleBtn.disabled = false;
   spreadBtn.disabled = false;
   buildDeckStack();
+
+  // Tự động trộn rồi trải bài ngay khi vào trang, không cần bấm nút.
+  hint.textContent = 'Đang tự động chuẩn bị bàn bài…';
+  await shuffleDeck();
+  spreadCards();
 }
 
 /* ============================================================
@@ -677,6 +681,11 @@ function applyBackArt(el){
    BỘ BÀI (trước khi trải) — hiệu ứng xáo bài
    ============================================================ */
 
+function stackedTransform(i, n){
+  const offset = (i - (n - 1) / 2);
+  return `translate(${offset * 3}px, ${-offset * 2}px) rotate(${offset * 2.2}deg)`;
+}
+
 function buildDeckStack(){
   const stack = document.getElementById('deckStack');
   stack.innerHTML = '';
@@ -688,8 +697,7 @@ function buildDeckStack(){
     back.className = 'art-back';
     applyBackArt(back);
     card.appendChild(back);
-    const offset = (i - (n - 1) / 2);
-    card.style.transform = `translate(${offset * 3}px, ${-offset * 2}px) rotate(${offset * 2.2}deg)`;
+    card.style.transform = stackedTransform(i, n);
     card.style.zIndex = i;
     stack.appendChild(card);
   }
@@ -742,9 +750,18 @@ async function shuffleDeck(){
   }
   await wait(380);
 
-  // ---- Bước 3: gộp lại thành bộ bài gọn gàng ----
+  // ---- Bước 3: gộp lại thành bộ bài gọn gàng (chuyển động mượt, không giật) ----
+  deckStack.querySelectorAll('.riffle-card').forEach(el => {
+    el.style.transition = 'opacity 0.2s ease';
+    el.style.opacity = '0';
+  });
+  cards.forEach((c, i) => {
+    c.style.transform = stackedTransform(i, cards.length);
+    c.style.zIndex = i;
+  });
+  await wait(340);
   deckStack.querySelectorAll('.riffle-card').forEach(el => el.remove());
-  buildDeckStack();
+
   shuffled = true;
   shuffleBtn.disabled = false;
   spreadBtn.disabled = false;
@@ -788,17 +805,9 @@ function spreadCards(){
   hint.textContent = `Đã trải ${drawPool.length} thẻ — chọn một lá bất kỳ…`;
 
   const n = drawPool.length;
-  const isMobile = window.innerWidth <= 560;
-  const totalArc = Math.min(isMobile ? 170 : 230, Math.max(30, n * 5.4));
-  const angleStep = n > 1 ? totalArc / (n - 1) : 0;
-  const startAngle = -totalArc / 2;
-  const radius = Math.round((isMobile ? 190 : 300) + Math.min(n, 30) * (isMobile ? 1.4 : 2.4));
-  const fanHeight = Math.round(radius * Math.cos((totalArc / 2) * Math.PI / 180) + 210);
-  fan.style.setProperty('--fan-height', fanHeight + 'px');
+  const slots = [];
 
   drawPool.forEach((card, i) => {
-    const angle = n > 1 ? startAngle + i * angleStep : 0;
-
     const slot = document.createElement('div');
     slot.className = 'spread-slot';
     slot.dataset.index = i;
@@ -817,9 +826,33 @@ function spreadCards(){
 
     slot.addEventListener('click', () => pickCard(i));
     fan.appendChild(slot);
+    slots.push(slot);
+  });
 
+  // Đo kích thước thật của thẻ + khung chứa (offsetWidth/Height không bị ảnh hưởng bởi transform)
+  // để tính cung & bán kính vừa khít, không bao giờ tràn màn hình hay bị cắt.
+  const cardW = slots[0].offsetWidth || 130;
+  const cardH = slots[0].offsetHeight || Math.round(cardW * 2048 / 1635);
+  const containerWidth = fan.clientWidth || window.innerWidth - 40;
+
+  // Giới hạn cung quạt tối đa ~130° (nửa cung 65°) để thẻ không bao giờ bị xoay quá ngang.
+  const totalArc = Math.min(130, Math.max(34, n * 2.7));
+  const halfArcRad = (totalArc / 2) * Math.PI / 180;
+  const angleStep = n > 1 ? totalArc / (n - 1) : 0;
+  const startAngle = -totalArc / 2;
+
+  // Bán kính mong muốn theo số lượng thẻ, nhưng không vượt quá bề ngang khung chứa.
+  const desiredRadius = Math.round(170 + Math.min(n, 44) * 2.6);
+  const maxRadiusByWidth = Math.round((containerWidth / 2 - cardW * 0.5) / Math.sin(Math.max(halfArcRad, 0.05)));
+  const radius = Math.max(cardH * 0.55, Math.min(desiredRadius, maxRadiusByWidth));
+
+  const fanHeight = Math.round(radius + cardH + 36);
+  fan.style.setProperty('--fan-height', fanHeight + 'px');
+
+  slots.forEach((slot, i) => {
+    const angle = n > 1 ? startAngle + i * angleStep : 0;
     // bay ra & xoè thành hình quạt, so le theo thứ tự lá bài
-    const delay = Math.min(i * 16, 620);
+    const delay = Math.min(i * 14, 560);
     setTimeout(() => {
       slot.style.transform = `rotate(${angle.toFixed(2)}deg) translateY(-${radius}px) scale(1)`;
       slot.style.opacity = '1';
@@ -1141,10 +1174,11 @@ loop();
    GẮN SỰ KIỆN NÚT & KHỞI ĐỘNG
    ============================================================ */
 
-document.getElementById('shuffleBtn').addEventListener('click', () => {
+document.getElementById('shuffleBtn').addEventListener('click', async () => {
   document.getElementById('deckStack').style.display = '';
   document.getElementById('spreadGrid').hidden = true;
-  shuffleDeck();
+  await shuffleDeck();
+  spreadCards();
 });
 
 document.getElementById('spreadBtn').addEventListener('click', spreadCards);
