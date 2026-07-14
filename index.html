@@ -6,6 +6,7 @@
 <title>BST Tiết Mục · Hành Trình 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Anton&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/garet" rel="stylesheet">
 <style>
 
   :root{
@@ -77,10 +78,10 @@
     line-height:1.7;
   }
   h1{
-    font-family:'Playfair Display', 'Alfa Slab One', serif;
+    font-family:'Garet', 'Playfair Display', 'Alfa Slab One', serif;
     font-weight:900;
     font-size:clamp(38px, 6vw, 64px);
-    margin:0 0 14px;
+    margin:0 0 4px;
     letter-spacing:0.02em;
     text-transform:uppercase;
     line-height:1.4;
@@ -133,7 +134,7 @@
     margin: 0 4px 20px;
   }
   .collection-num{
-    font-family:'Anton', sans-serif;
+    font-family:'Garet', 'Anton', sans-serif;
     font-size:15px;
     letter-spacing:0.08em;
     color:var(--void);
@@ -142,7 +143,7 @@
     border-radius:3px;
   }
   .collection-title{
-    font-family:'Anton', sans-serif;
+    font-family:'Garet', 'Anton', sans-serif;
     font-weight:400;
     font-size:clamp(20px, 2.6vw, 28px);
     letter-spacing:0.02em;
@@ -270,7 +271,7 @@
   .tile .tile-num{
     position:absolute;
     top:14px; left:14px;
-    font-family:'Anton', sans-serif;
+    font-family:'Garet', 'Anton', sans-serif;
     font-size:14px;
     letter-spacing:0.08em;
     color:var(--void);
@@ -279,7 +280,7 @@
     border-radius:4px;
   }
   .tile .tile-title{
-    font-family:'Playfair Display', 'Alfa Slab One', serif;
+    font-family:'Garet', 'Playfair Display', 'Alfa Slab One', serif;
     font-weight:900;
     font-size:clamp(20px, 2.8vw, 27px);
     text-transform:uppercase;
@@ -298,6 +299,48 @@
     padding:5px 12px;
     border-radius:20px;
     border:1px solid rgba(244,211,94,0.4);
+  }
+
+  /* ---------- Nút nổi: Rút Thẻ (tiện ích phụ) ---------- */
+  .fab-rutthe{
+    position:fixed;
+    right:24px;
+    bottom:26px;
+    z-index:30;
+    display:inline-flex;
+    align-items:center;
+    text-decoration:none;
+    font-family:'Garet', 'IBM Plex Mono', monospace;
+    font-weight:700;
+    font-size:13px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--void);
+    background: linear-gradient(135deg, var(--gold), var(--flame));
+    padding:13px 22px;
+    border-radius:30px;
+    box-shadow:
+      0 0 0 1px rgba(244,211,94,0.5),
+      0 10px 24px -6px rgba(232,56,13,0.55),
+      0 4px 14px rgba(0,0,0,0.5);
+    transition: transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease, filter 0.25s ease;
+  }
+  .fab-rutthe:hover, .fab-rutthe:focus-visible{
+    transform: translateY(-3px) scale(1.03);
+    filter: brightness(1.06);
+    box-shadow:
+      0 0 0 1px rgba(244,211,94,0.75),
+      0 16px 32px -8px rgba(232,56,13,0.7),
+      0 6px 16px rgba(0,0,0,0.55);
+    outline:none;
+  }
+  @media (max-width: 560px){
+    .fab-rutthe{
+      right:16px;
+      bottom:18px;
+      padding:11px 18px;
+      font-size:11px;
+    }
   }
 
   /* ---------- Detail page ---------- */
@@ -350,54 +393,47 @@
     <div class="eyebrow">Muốn chiến thì chiến - Vượt mọi chông gai</div>
     <h1>Hành Trình 2026</h1>
     <p class="sub"><span>Người đàn ông trên lưng ngựa</span><span><strong>Viết lên câu chuyện cổ tích của chính mình</strong></span></p>
-    
-    <div class="footer-note" style="margin-top: 20px;">NHẤN VÀO MỘT CÔNG DIỄN ĐỂ XEM CÁC NHÓM</div>
   </div>
 
   <div class="overview">
-    <a class="tile" href="rut-the.html">
-      <span class="tile-num">01</span>
-      <div class="tile-title">Rút Thẻ</div>
-      <span class="tile-count">Ngẫu nhiên</span>
-    </a>
     <a class="tile" href="cong-dien-hoi-ngo.html">
-      <span class="tile-num">02</span>
+      <span class="tile-num">01</span>
       <div class="tile-title">Công Diễn<br>Hội Ngộ</div>
       <span class="tile-count">10 nhóm</span>
     </a>
     <a class="tile" href="cong-dien-1.html">
-      <span class="tile-num">03</span>
+      <span class="tile-num">02</span>
       <div class="tile-title">Công Diễn 1</div>
       <span class="tile-count">08 nhà</span>
     </a>
     <a class="tile" href="cong-dien-2.html">
-      <span class="tile-num">04</span>
+      <span class="tile-num">03</span>
       <div class="tile-title">Công Diễn 2</div>
       <span class="tile-count">10 nhóm</span>
     </a>
     <a class="tile" href="cong-dien-3.html">
-      <span class="tile-num">05</span>
+      <span class="tile-num">04</span>
       <div class="tile-title">Công Diễn 3</div>
       <span class="tile-count">10 nhóm</span>
     </a>
     <a class="tile" href="cong-dien-4.html">
-      <span class="tile-num">06</span>
+      <span class="tile-num">05</span>
       <div class="tile-title">Công Diễn 4</div>
       <span class="tile-count">10 nhóm</span>
     </a>
     <a class="tile" href="cong-dien-5.html">
-      <span class="tile-num">07</span>
+      <span class="tile-num">06</span>
       <div class="tile-title">Công Diễn 5</div>
       <span class="tile-count">10 nhóm</span>
     </a>
     <a class="tile" href="chung-ket.html">
-      <span class="tile-num">08</span>
+      <span class="tile-num">07</span>
       <div class="tile-title">Chung Kết</div>
       <span class="tile-count">10 nhóm</span>
     </a>
   </div>
 
-  <div class="footer-note">NHẤN VÀO MỘT CÔNG DIỄN ĐỂ XEM CÁC NHÓM</div>
+  <a class="fab-rutthe" href="rut-the.html">Rút Thẻ</a>
 
 <script>
 
