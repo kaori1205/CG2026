@@ -6,6 +6,7 @@
 <title>Rút Thẻ · Hành Trình 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Anton&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.cdnfonts.com/css/garet" rel="stylesheet">
 <style>
 
   :root{
@@ -22,9 +23,10 @@
     --text-muted:#a99b8c;
     --card-ratio: 1635 / 2048;
     /* Kích thước khung thẻ khi xáo/trải/trộn — bằng đúng khung thẻ dùng ở
-       index.html / cong-dien-hoi-ngo.html (--card-w: clamp(118px, 27vw, 55mm)) */
-    --deck-card-w: clamp(118px, 27vw, 55mm);
-    --card-w: clamp(220px, 58vw, 400px);
+       index.html / cong-dien-hoi-ngo.html (--card-w: clamp(118px, 27vw, 55mm)),
+       có thêm giới hạn theo vh để không chồng lấn tiêu đề/nút ở màn hình thấp/ngang. */
+    --deck-card-w: clamp(100px, min(27vw, 34vh), 55mm);
+    --card-w: clamp(200px, min(58vw, 62vh), 400px);
     --radius-deck: 3mm;
     --radius: 4mm;
     --card-depth: 10px;
@@ -118,6 +120,10 @@
   }
   .redraw-btn{
     display:none;
+    position:fixed;
+    left:20px;
+    bottom: max(20px, calc(env(safe-area-inset-bottom) + 20px));
+    z-index:20;
   }
   body.phase-reveal .redraw-btn{ display:inline-flex; }
 
@@ -136,7 +142,7 @@
   .label .num{
     order:1;
     display:inline-block;
-    font-family:'Anton', sans-serif;
+    font-family:'Garet', 'Anton', sans-serif;
     color:var(--void);
     background: linear-gradient(135deg, var(--gold), var(--flame));
     padding:3px 9px;
@@ -147,7 +153,7 @@
     order:2;
     display:block;
     margin-top:0;
-    font-family:'Playfair Display', serif;
+    font-family:'Garet', 'Playfair Display', serif;
     font-weight:900;
     font-size:15px;
     color: var(--label-text, var(--text-light));
@@ -184,7 +190,7 @@
     margin-bottom:10px;
   }
   h1{
-    font-family:'Playfair Display', 'Alfa Slab One', serif;
+    font-family:'Garet', 'Playfair Display', 'Alfa Slab One', serif;
     font-weight:900;
     font-size:clamp(30px, 6vw, 50px);
     margin:0 0 10px;
@@ -208,7 +214,7 @@
   }
   .sub strong{
     color:var(--gold);
-    font-family:'Anton', sans-serif;
+    font-family:'Garet', 'Anton', sans-serif;
     font-size:14px;
     letter-spacing:0.04em;
   }
@@ -247,6 +253,8 @@
     will-change: transform;
   }
   .sc-wobble{
+    width:100%;
+    height:100%;
     animation: scWobble var(--wob-dur, 2.6s) ease-in-out infinite;
     animation-delay: var(--wob-delay, 0s);
   }
@@ -294,7 +302,8 @@
     left:50%; bottom: max(38px, calc(env(safe-area-inset-bottom) + 38px));
     transform: translateX(-50%);
     z-index:6;
-    font-family:'Anton', sans-serif;
+    font-family:'Garet', 'Anton', sans-serif;
+    font-weight:700;
     font-size:17px;
     letter-spacing:0.1em;
     text-transform:uppercase;
@@ -650,7 +659,6 @@
   <div class="top-bar">
     <a class="back-btn is-dark" href="index.html">← Trang chủ</a>
     <div class="top-right">
-      <button class="back-btn is-dark redraw-btn" id="redrawBtn">↻ Rút Thẻ Khác</button>
       <div class="label is-dark" id="labelBox">
         <span class="num" id="labelNum"></span>
         <span class="title" id="labelTitle"></span>
@@ -658,10 +666,11 @@
     </div>
   </div>
 
+  <button class="back-btn is-dark redraw-btn" id="redrawBtn">↻ Rút Thẻ Khác</button>
+
   <div class="header" id="mainHeader">
     <div class="eyebrow">Muốn chiến thì chiến - Vượt mọi chông gai</div>
-    <h1>Rút Thẻ Định Mệnh</h1>
-    <p class="sub">Tổng cộng <strong id="totalCount">0</strong> thẻ thật đang chờ trong bộ · nhấn nút bên dưới để rút ngẫu nhiên</p>
+    <h1>Rút Thẻ</h1>
   </div>
 
   <!-- ================= PHA 1: XÁO / TRỘN / TRẢI THẺ ================= -->
@@ -738,7 +747,33 @@ const MUC_TITLES = {
   10: "Anh Tài Tình"
 };
 
-const CARDS = [
+/* ==================================================================
+   NGUỒN THẺ THẬT
+   ------------------------------------------------------------------
+   Ngay khi người dùng bấm "RÚT THẺ", trang sẽ tự động tải (fetch) từng
+   trang công diễn dưới đây và quét trong đó những thẻ ĐÃ có ảnh thật
+   (dựa theo cùng cấu trúc .muc-block > .collection-num + .slot .art
+   với ảnh thật là các thẻ có gắn sẵn background-image; thẻ nào chưa có
+   ảnh — .art không có background-image — sẽ tự động bị bỏ qua).
+
+   Nếu file đang mở trực tiếp trên máy (không qua server) hoặc một
+   trang công diễn nào đó không tải được, hệ thống sẽ tự dùng bộ thẻ
+   dự phòng FALLBACK_CARDS bên dưới để không bao giờ bị "rút hụt".
+
+   Nếu cấu trúc HTML thật của các trang công diễn khác với giả định
+   trên, gửi mình 1 file mẫu để chỉnh lại đúng selector.
+   ================================================================== */
+const SOURCE_PAGES = [
+  'cong-dien-hoi-ngo.html',
+  'cong-dien-1.html',
+  'cong-dien-2.html',
+  'cong-dien-3.html',
+  'cong-dien-4.html',
+  'cong-dien-5.html',
+  'chung-ket.html'
+];
+
+const FALLBACK_CARDS = [
   { muc: 1, img: "images/cong-dien-hoi-ngo/muc-01/anh-the-1.webp" },
   { muc: 1, img: "images/cong-dien-hoi-ngo/muc-01/anh-the-2.webp" },
   { muc: 1, img: "images/cong-dien-hoi-ngo/muc-01/anh-the-3.webp" },
@@ -785,7 +820,56 @@ const CARDS = [
   { muc: 10, img: "images/cong-dien-hoi-ngo/muc-10/anh-the-5.webp" }
 ];
 
-document.getElementById('totalCount').textContent = CARDS.length;
+// Quét 1 trang công diễn đã tải về: tìm mọi thẻ (.slot .art) có sẵn
+// background-image (tức đã gắn ảnh thật), gắn với số mục (.collection-num)
+// của khối .muc-block chứa nó.
+function extractCardsFromDoc(doc){
+  const found = [];
+  doc.querySelectorAll('.muc-block').forEach(block => {
+    const numEl = block.querySelector('.collection-num');
+    const muc = numEl ? parseInt(numEl.textContent, 10) : null;
+    if(!muc) return;
+    block.querySelectorAll('.slot .art').forEach(art => {
+      const bg = art.getAttribute('style') || '';
+      const match = bg.match(/url\((?:"|')?(.*?)(?:"|')?\)/);
+      const src = match && match[1] ? match[1].trim() : '';
+      if(src) found.push({ muc, img: src });
+    });
+  });
+  return found;
+}
+
+async function fetchCardsFromPage(url){
+  try{
+    const res = await fetch(url, { cache: 'no-store' });
+    if(!res.ok) return [];
+    const html = await res.text();
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    return extractCardsFromDoc(doc);
+  }catch(err){
+    return [];
+  }
+}
+
+async function buildCardsPool(){
+  const perPage = await Promise.all(SOURCE_PAGES.map(fetchCardsFromPage));
+  const merged = perPage.flat();
+  return merged.length ? merged : FALLBACK_CARDS;
+}
+
+function withTimeout(promise, ms, fallbackValue){
+  return Promise.race([
+    promise,
+    new Promise(resolve => setTimeout(() => resolve(fallbackValue), ms))
+  ]);
+}
+
+// Chỉ quét 1 lần rồi lưu lại cho các lượt rút thẻ tiếp theo (đỡ tải mạng lặp lại).
+let cardsPoolPromise = null;
+function getCardsPool(){
+  if(!cardsPoolPromise) cardsPoolPromise = buildCardsPool();
+  return withTimeout(cardsPoolPromise, 4000, FALLBACK_CARDS);
+}
 
 /* ==================================================================
    PHA 1 — ĐỘNG CƠ XÁO / TRỘN / TRẢI THẺ
@@ -803,6 +887,15 @@ function shuffleArrayInPlace(arr){
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// Đo kích thước thẻ thật đang render (theo --deck-card-w) để mọi khoảng cách
+// xáo/trải/trộn tự co giãn đúng tỉ lệ, dù bạn đổi kích thước khung thẻ.
+let cardWidth = 140;
+function measureCardWidth(){
+  if(!shuffleEls.length) return;
+  const rect = shuffleEls[0].getBoundingClientRect();
+  if(rect.width) cardWidth = rect.width;
 }
 
 for(let i = 0; i < N_DECK; i++){
@@ -831,15 +924,6 @@ function setXform(el, tx, ty, rot, sc){
   el.style.setProperty('--ty', ty.toFixed(1) + 'px');
   el.style.setProperty('--rot', rot.toFixed(1) + 'deg');
   el.style.setProperty('--sc', sc.toFixed(3));
-}
-
-// Đo kích thước thẻ thật đang render (theo --deck-card-w) để mọi khoảng cách
-// xáo/trải/trộn tự co giãn đúng tỉ lệ, dù bạn đổi kích thước khung thẻ.
-let cardWidth = 140;
-function measureCardWidth(){
-  if(!shuffleEls.length) return;
-  const rect = shuffleEls[0].getBoundingClientRect();
-  if(rect.width) cardWidth = rect.width;
 }
 
 // "Xáo": chồng thành cọc thẻ gọn, hơi lệch ngẫu nhiên như đang được xóc
@@ -909,9 +993,21 @@ shuffleCycle(generation);
 /* ==================================================================
    CHUYỂN PHA: nhấn RÚT THẺ -> gom cọc -> văng thẻ -> flash -> reveal
    ================================================================== */
+/* ==================================================================
+   CHUYỂN PHA: nhấn RÚT THẺ -> gom cọc -> văng thẻ -> flash -> reveal
+   ------------------------------------------------------------------
+   Thời gian chờ (wait) được canh khớp với thời lượng transition CSS
+   tương ứng của từng bước, để không cắt animation giữa chừng (nguyên
+   nhân chính khiến chuyển cảnh trước đây bị giật/thiếu mượt). Điểm
+   "chuyển cảnh" (đổi từ sân khấu xáo thẻ sang thẻ kết quả) được canh
+   đúng lúc màn hình lóe sáng gần như trắng xoá (đỉnh của screen-flash)
+   để việc đổi DOM phía sau hoàn toàn bị che, tạo cảm giác 1 pha liền
+   mạch thay vì 2 đoạn animation rời rạc nối vào nhau.
+   ================================================================== */
 const drawBtn = document.getElementById('drawBtn');
 const redrawBtn = document.getElementById('redrawBtn');
 const screenFlash = document.getElementById('screenFlash');
+const drawBtnDefaultText = drawBtn.textContent;
 
 function replayAnim(el){
   if(!el) return;
@@ -920,22 +1016,30 @@ function replayAnim(el){
   el.style.animation = '';
 }
 
-function pickRandomCard(){
-  return CARDS[Math.floor(Math.random() * CARDS.length)];
+function pickRandomCard(pool){
+  return pool[Math.floor(Math.random() * pool.length)];
 }
 
 async function startDrawSequence(){
   drawBtn.disabled = true;
+  drawBtn.textContent = 'ĐANG RÚT...';
 
+  // Bắt đầu quét thẻ thật song song với animation gom/văng thẻ,
+  // để không cộng dồn thêm thời gian chờ nếu mạng đủ nhanh.
+  const poolPromise = getCardsPool();
+
+  // Bước 1 — gom thẻ thành cọc gọn (khớp transition 0.85s của .shuffle-card)
   layoutStack(currentOrder);
-  await wait(550);
+  await wait(900);
 
+  // Bước 2 — thẻ trúng dâng lên & phóng to nhẹ, các thẻ còn lại văng ra
+  // (khớp transition 0.9s / 0.75s đã khai báo cho từng thẻ)
   const winnerEl = currentOrder[0];
   currentOrder.forEach((el) => {
     if(el === winnerEl){
       el.style.zIndex = 999;
       el.style.transition = 'transform 0.9s cubic-bezier(.2,.8,.2,1)';
-      setXform(el, 0, -16, 0, 1.4);
+      setXform(el, 0, -18, 0, 1.55);
     } else {
       const ang = rand(0, Math.PI * 2);
       const dist = rand(cardWidth * 2.2, cardWidth * 4.4);
@@ -944,15 +1048,24 @@ async function startDrawSequence(){
       setXform(el, Math.cos(ang) * dist, Math.sin(ang) * dist, rand(-540, 540), 0.6);
     }
   });
+  await wait(900);
 
-  await wait(700);
+  // Đảm bảo đã có kết quả (thẻ thật) trước khi loé sáng chuyển cảnh
+  const pool = await poolPromise;
+  const card = pickRandomCard(pool);
 
+  // Bước 3 — loé sáng toàn màn hình; đợi đúng lúc gần đỉnh sáng nhất
+  // rồi mới đổi DOM phía sau, để người xem không thấy điểm "cắt cảnh"
   screenFlash.classList.remove('active');
   void screenFlash.offsetWidth;
   screenFlash.classList.add('active');
-  await wait(260);
+  await wait(180);
 
-  showReveal(pickRandomCard());
+  showReveal(card);
+
+  // Nút RÚT THẺ được ẩn ngay khi vào phase-reveal (CSS), trả lại nhãn
+  // gốc để sẵn sàng cho lần rút tiếp theo (sau khi bấm "Rút Thẻ Khác").
+  drawBtn.textContent = drawBtnDefaultText;
 }
 
 drawBtn.addEventListener('click', () => {
