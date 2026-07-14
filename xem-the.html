@@ -237,22 +237,31 @@
   .holo-sheen{
     position:absolute; inset:4px;
     border-radius: calc(var(--radius) - 1px);
-    background: repeating-linear-gradient(115deg,
-      rgba(255,46,151,0.55) 0%,
-      rgba(255,196,0,0.55) 9%,
-      rgba(84,255,196,0.55) 18%,
-      rgba(63,150,255,0.55) 27%,
-      rgba(198,63,255,0.55) 36%,
-      rgba(255,46,151,0.55) 45%);
-    background-size:260% 260%;
-    mix-blend-mode: color-dodge;
-    opacity:0.4;
+    background:
+      repeating-linear-gradient(115deg,
+        rgba(255,46,151,0.5) 0%,
+        rgba(255,196,0,0.5) 9%,
+        rgba(84,255,196,0.5) 18%,
+        rgba(63,150,255,0.5) 27%,
+        rgba(198,63,255,0.5) 36%,
+        rgba(255,46,151,0.5) 45%),
+      repeating-linear-gradient(25deg,
+        transparent 0%,
+        rgba(255,255,255,0.09) 3%,
+        transparent 6%);
+    background-size:260% 260%, 34% 34%;
+    mix-blend-mode: screen;
+    opacity:0.3;
     pointer-events:none;
   }
   .holo-glare{
     position:absolute; inset:4px;
     border-radius: calc(var(--radius) - 1px);
-    background: radial-gradient(circle at var(--gx,50%) var(--gy,50%), rgba(255,255,255,0.95), transparent 55%);
+    background: radial-gradient(circle at var(--gx,50%) var(--gy,50%),
+      rgba(255,255,255,0.95) 0%,
+      rgba(255,222,244,0.55) 6%,
+      rgba(190,222,255,0.28) 15%,
+      transparent 34%);
     mix-blend-mode: overlay;
     opacity:0;
     pointer-events:none;
@@ -264,6 +273,26 @@
     opacity: var(--edge-op, 0);
     pointer-events:none;
     mix-blend-mode:overlay;
+  }
+  /* Vân hạt (grain) rất nhẹ để bề mặt bớt "sạch" kiểu digital, giống chất liệu in thật */
+  .card-grain{
+    position:absolute; inset:0;
+    border-radius: calc(var(--radius) - 1px);
+    opacity:0.05;
+    mix-blend-mode: overlay;
+    pointer-events:none;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
+  }
+  /* Cạnh/độ dày thẻ: một lớp lùi ra sau theo trục Z, tối hơn, lộ ra khi thẻ nghiêng
+     -> tạo cảm giác thẻ là vật thể có độ dày thật chứ không phải ảnh phẳng dán trên kính */
+  .card-edge{
+    position:absolute; inset:0;
+    border-radius: var(--radius);
+    background-image:
+      linear-gradient(135deg, #f4ecd6 0%, #c9ccd0 18%, #8a8f96 32%, #f4ecd6 48%, #b8862f 60%, #8a8f96 78%, #d7dbe0 100%);
+    filter: brightness(0.5) saturate(0.9);
+    transform: translateZ(-6px);
+    pointer-events:none;
   }
 
   .hint{
@@ -305,12 +334,14 @@
     <div class="card-wrap">
       <div class="card-inner" id="cardInner">
         <div class="card-shadow"></div>
+        <div class="card-edge"></div>
         <div class="card-face">
           <div class="card-art"><div class="art" id="cardArt"></div></div>
         </div>
         <div class="holo-sheen" id="holoSheen"></div>
         <div class="holo-glare" id="holoGlare"></div>
         <div class="holo-edge" id="holoEdge"></div>
+        <div class="card-grain"></div>
       </div>
     </div>
   </div>
@@ -494,6 +525,9 @@
   let targetScale = 1, curScale = 1;
   let pointerActive = false;
   let idleT = Math.random() * 10;
+  // Nhiễu ngẫu nhiên nhỏ, có giảm chấn (damping) để không bị trôi dạt xa khỏi trung tâm
+  // -> chuyển động idle bớt "đều/máy móc" hơn so với chỉ dùng sin/cos thuần
+  let jitterX = 0, jitterY = 0;
 
   function onPointerMove(e){
     const rect = cardInner.getBoundingClientRect();
@@ -525,8 +559,12 @@
   function loop(){
     if(!pointerActive){
       idleT += 0.008;
-      targetRY = Math.sin(idleT) * 9;
-      targetRX = Math.cos(idleT * 0.7) * 4;
+      jitterX += (Math.random() - 0.5) * 0.5;
+      jitterY += (Math.random() - 0.5) * 0.5;
+      jitterX *= 0.94; // damping: kéo dần jitter về 0 để không trôi dạt
+      jitterY *= 0.94;
+      targetRY = Math.sin(idleT) * 9 + jitterX;
+      targetRX = Math.cos(idleT * 0.7) * 4 + jitterY;
       targetPX = 50 + Math.sin(idleT) * 20;
       targetPY = 50 + Math.cos(idleT * 0.8) * 20;
       targetGlow = 0.22 + Math.sin(idleT * 1.3) * 0.1;
@@ -542,7 +580,7 @@
 
     cardInner.style.transform = `scale(${curScale}) rotateX(${curRX}deg) rotateY(${curRY}deg)`;
     cardShadowEl.style.transform = `translateZ(-40px) translateX(${curRY * -1.6}px) translateY(${curRX * 1.2}px) scale(${1 - Math.abs(curRY) * 0.006}, ${1 - Math.abs(curRX) * 0.006})`;
-    holoSheen.style.backgroundPosition = `${curPX}% ${curPY}%`;
+    holoSheen.style.backgroundPosition = `${curPX}% ${curPY}%, ${100 - curPX}% ${100 - curPY}%`;
     holoGlare.style.setProperty('--gx', curPX + '%');
     holoGlare.style.setProperty('--gy', curPY + '%');
     holoGlare.style.opacity = curGlow;
