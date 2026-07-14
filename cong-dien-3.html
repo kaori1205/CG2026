@@ -414,23 +414,23 @@
            images/cong-dien-3/muc-10/
          (một thư mục con cho MỖI mục, nằm trong images/cong-dien-3/,
           cùng cấp với file HTML này.)
-       - Trong mỗi thư mục mục, đặt 4 ảnh .png tên lần lượt:
-           anh-the-1.png
-           anh-the-2.png
-           anh-the-3.png
-           anh-the-4.png
+       - Trong mỗi thư mục mục, đặt 4 ảnh .webp tên lần lượt:
+           anh-the-1.webp
+           anh-the-2.webp
+           anh-the-3.webp
+           anh-the-4.webp
        - Ảnh sẽ tự động hiển thị, không cần sửa code.
 
     3) THÊM THẺ VÀO MỘT MỤC (nhiều hơn 4 thẻ):
        - Kéo xuống phần <script> ở cuối trang, tìm mảng CARDS.
        - Mỗi thẻ là một dòng dạng:
-           { muc: X, img: "images/cong-dien-3/muc-0X/anh-the-Z.png" }
+           { muc: X, img: "images/cong-dien-3/muc-0X/anh-the-Z.webp" }
          trong đó:
            X = số thứ tự mục (1-10, khớp với "Mục 0X" muốn thêm thẻ)
            Z = số thứ tự ảnh mới trong thư mục mục đó (5, 6, 7, ...)
        - Copy 1 dòng bất kỳ có cùng "muc: X", dán thêm 1 dòng mới ngay
-         bên dưới, sửa lại tên file ảnh (anh-the-5.png, ...).
-       - Nhớ đặt ảnh anh-the-5.png (v.v.) vào đúng thư mục
+         bên dưới, sửa lại tên file ảnh (anh-the-5.webp, ...).
+       - Nhớ đặt ảnh anh-the-5.webp (v.v.) vào đúng thư mục
          images/cong-dien-3/muc-0X/ tương ứng.
        - Không giới hạn số thẻ tối đa trong 1 mục, cứ thêm dòng + ảnh
          theo đúng quy tắc trên là được.
@@ -539,49 +539,49 @@
 <script>
 // Danh sách thẻ của công diễn này.
 // - Mỗi thẻ là 1 dòng: { muc: <số mục 1-10>, img: "<đường dẫn ảnh>" }
-// - Ảnh đặt trong images/cong-dien-3/muc-0X/anh-the-Y.png (X = số mục, Y = số thứ tự thẻ trong mục).
+// - Ảnh đặt trong images/cong-dien-3/muc-0X/anh-the-Y.webp (X = số mục, Y = số thứ tự thẻ trong mục).
 // - Mặc định mỗi mục có 4 thẻ (anh-the-1..4). Xem hướng dẫn ở đầu trang HTML để thêm/bớt thẻ.
 const CARDS = [
-  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-1.png" },
-  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-2.png" },
-  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-3.png" },
-  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-4.png" },
-  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-1.png" },
-  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-2.png" },
-  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-3.png" },
-  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-4.png" },
-  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-1.png" },
-  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-2.png" },
-  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-3.png" },
-  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-4.png" },
-  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-1.png" },
-  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-2.png" },
-  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-3.png" },
-  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-4.png" },
-  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-1.png" },
-  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-2.png" },
-  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-3.png" },
-  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-4.png" },
-  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-1.png" },
-  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-2.png" },
-  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-3.png" },
-  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-4.png" },
-  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-1.png" },
-  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-2.png" },
-  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-3.png" },
-  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-4.png" },
-  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-1.png" },
-  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-2.png" },
-  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-3.png" },
-  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-4.png" },
-  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-1.png" },
-  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-2.png" },
-  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-3.png" },
-  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-4.png" },
-  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-1.png" },
-  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-2.png" },
-  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-3.png" },
-  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-4.png" }
+  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-1.webp" },
+  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-2.webp" },
+  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-3.webp" },
+  { muc: 1, img: "images/cong-dien-3/muc-01/anh-the-4.webp" },
+  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-1.webp" },
+  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-2.webp" },
+  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-3.webp" },
+  { muc: 2, img: "images/cong-dien-3/muc-02/anh-the-4.webp" },
+  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-1.webp" },
+  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-2.webp" },
+  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-3.webp" },
+  { muc: 3, img: "images/cong-dien-3/muc-03/anh-the-4.webp" },
+  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-1.webp" },
+  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-2.webp" },
+  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-3.webp" },
+  { muc: 4, img: "images/cong-dien-3/muc-04/anh-the-4.webp" },
+  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-1.webp" },
+  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-2.webp" },
+  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-3.webp" },
+  { muc: 5, img: "images/cong-dien-3/muc-05/anh-the-4.webp" },
+  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-1.webp" },
+  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-2.webp" },
+  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-3.webp" },
+  { muc: 6, img: "images/cong-dien-3/muc-06/anh-the-4.webp" },
+  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-1.webp" },
+  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-2.webp" },
+  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-3.webp" },
+  { muc: 7, img: "images/cong-dien-3/muc-07/anh-the-4.webp" },
+  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-1.webp" },
+  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-2.webp" },
+  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-3.webp" },
+  { muc: 8, img: "images/cong-dien-3/muc-08/anh-the-4.webp" },
+  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-1.webp" },
+  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-2.webp" },
+  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-3.webp" },
+  { muc: 9, img: "images/cong-dien-3/muc-09/anh-the-4.webp" },
+  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-1.webp" },
+  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-2.webp" },
+  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-3.webp" },
+  { muc: 10, img: "images/cong-dien-3/muc-10/anh-the-4.webp" }
 ];
 
 
