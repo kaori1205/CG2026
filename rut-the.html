@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Rút Thẻ · Hành Trình 2026</title>
+<title>Rút Thẻ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Anton&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -20,14 +20,14 @@
     --iron:#1a1512;
     --text-light:#f2ece0;
     --text-muted:#a99b8c;
-    --card-w: clamp(96px, 22vw, 150px);
+    --card-w: clamp(58px, calc(6vw + 9vh), 150px);
     --card-ratio: 1635 / 2048;
     --radius: 3mm;
     --card-depth: 10px;
   }
 
   *{box-sizing:border-box;}
-  html,body{margin:0;padding:0;}
+  html,body{margin:0;padding:0; height:100%; width:100%; overflow:hidden; overscroll-behavior:none;}
   body{
     background:
       radial-gradient(ellipse 900px 700px at 50% 8%, rgba(232,56,13,0.28), transparent 60%),
@@ -36,10 +36,16 @@
       linear-gradient(180deg, #170604 0%, var(--void) 45%, #050202 100%);
     color:var(--text-light);
     font-family:'Source Sans 3', sans-serif;
-    min-height:100vh;
-    padding: 56px 24px 90px;
+    height:100vh;
+    height:100dvh;
+    width:100vw;
+    padding: clamp(10px, 2.4vh, 30px) clamp(12px, 3vw, 24px) clamp(8px, 1.8vh, 20px);
     position:relative;
-    overflow-x:hidden;
+    overflow:hidden;
+    overscroll-behavior:none;
+    touch-action:none;
+    display:flex;
+    flex-direction:column;
   }
 
   .streak{
@@ -59,7 +65,7 @@
     *{animation-duration:0.01ms !important; transition-duration:0.01ms !important;}
   }
 
-  .detail-top{ max-width:1180px; margin:0 auto 26px; position:relative; z-index:1; }
+  .detail-top{ max-width:1180px; margin:0 auto clamp(8px, 1.6vh, 22px); position:relative; z-index:1; flex:0 0 auto; }
   .back-btn{
     display:inline-flex; align-items:center; gap:8px;
     background:transparent; border:1px solid rgba(244,211,94,0.4); color:var(--gold);
@@ -69,15 +75,15 @@
   }
   .back-btn:hover{ background: rgba(232,56,13,0.12); border-color: var(--flame); color: var(--flame); }
 
-  .header{ max-width: 980px; margin: 0 auto 42px; text-align:center; position:relative; z-index:1; }
+  .header{ max-width: 980px; margin: 0 auto clamp(10px, 2vh, 30px); text-align:center; position:relative; z-index:1; flex:0 0 auto; }
   .eyebrow{
     font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.05em; color:var(--flame);
     margin-bottom:16px; max-width:520px; margin-left:auto; margin-right:auto; line-height:1.7;
   }
   h1{
     font-family:'Playfair Display', 'Alfa Slab One', serif; font-weight:900;
-    font-size:clamp(34px, 5.6vw, 58px); margin:0 0 14px; letter-spacing:0.02em;
-    text-transform:uppercase; line-height:1.4; padding:0.15em 0;
+    font-size:clamp(28px, 4.5vw + 3vh, 58px); margin:0; letter-spacing:0.02em;
+    text-transform:uppercase; line-height:1.3; padding:0.15em 0;
     background: linear-gradient(180deg, #ffffff 0%, var(--steel) 35%, var(--gold) 75%, var(--flame) 100%);
     -webkit-background-clip:text; background-clip:text; color:transparent;
     filter: drop-shadow(0 2px 18px rgba(232,56,13,0.45));
@@ -87,12 +93,13 @@
 
   /* ---------- Thanh trạng thái tự động (không cần chọn thủ công) ---------- */
   .status-bar{
-    max-width:1180px; margin:0 auto 34px; position:relative; z-index:1; text-align:center;
-    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.06em; color:var(--text-muted);
+    max-width:1180px; margin:0 auto clamp(8px, 1.6vh, 24px); position:relative; z-index:1; text-align:center;
+    font-family:'IBM Plex Mono', monospace; font-size:clamp(10px, 1.3vh + 0.3vw, 12px); letter-spacing:0.06em; color:var(--text-muted);
+    flex:0 0 auto;
   }
   .status-bar strong{ color:var(--gold); }
 
-  .panel-actions{ display:flex; flex-wrap:wrap; gap:14px; margin-top:28px; justify-content:center; }
+  .panel-actions{ display:flex; flex-wrap:wrap; gap:14px; margin-top:clamp(10px,2vh,28px); justify-content:center; flex:0 0 auto; }
   .action-btn{
     font-family:'Anton', sans-serif; font-size:14px; letter-spacing:0.05em; text-transform:uppercase;
     color:var(--gold); background:rgba(255,255,255,0.03); border:1px solid rgba(244,211,94,0.4);
@@ -108,13 +115,16 @@
 
   /* ---------- Table / deck area ---------- */
   .table-area{
-    max-width:1180px; margin:0 auto; position:relative; z-index:1; min-height:280px;
+    max-width:1180px; width:100%; margin:0 auto; position:relative; z-index:1;
+    flex:1 1 auto; min-height:0;
     background: radial-gradient(ellipse 700px 300px at 50% 40%, rgba(232,56,13,0.10), transparent 70%);
-    border-radius:18px; padding:40px 20px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    border-radius:18px; padding: clamp(6px,1.6vh,30px) 20px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    overflow:hidden;
   }
   .table-hint{
-    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:0.06em; color:var(--text-muted);
-    text-align:center; margin: 22px 0 0;
+    font-family:'IBM Plex Mono', monospace; font-size:clamp(10px,1.2vh + 0.3vw,12px); letter-spacing:0.06em; color:var(--text-muted);
+    text-align:center; margin: clamp(8px,1.6vh,22px) 0 0; flex:0 0 auto;
   }
 
   .deck-stack{ position:relative; width:var(--card-w); aspect-ratio:var(--card-ratio); margin:0 auto; }
@@ -142,24 +152,28 @@
 
   /* ---------- Rút bài kiểu xoè quạt (fan spread) ---------- */
   .fan-container{
-    position:relative; width:100%; max-width:1200px; margin:34px auto 10px;
-    height: var(--fan-height, 300px); overflow:visible;
+    position:relative; width:100%; max-width:1200px; margin: clamp(8px,1.6vh,20px) auto clamp(4px,1vh,10px);
+    height: var(--fan-height, 300px); max-height:100%; overflow:visible;
+    flex:0 1 auto; min-height:0;
   }
   .spread-slot{
     position:absolute; left:50%; bottom:0; width:var(--card-w); aspect-ratio:var(--card-ratio);
     margin-left: calc(var(--card-w) / -2); cursor:pointer;
-    transform-origin:50% 100%;
-    transition: transform 0.7s cubic-bezier(.19,1.15,.24,1), opacity 0.4s ease;
+    transform-origin:50% 100%; will-change:transform;
+    transition: transform 0.68s cubic-bezier(.16,1,.3,1), opacity 0.45s ease;
   }
   .spread-slot .card-back-face{
     position:relative; width:100%; height:100%; border-radius:var(--radius); overflow:hidden;
     box-shadow: 0 0 0 1px rgba(244,211,94,0.5), 0 0 18px rgba(232,56,13,0.3), 0 10px 20px -8px rgba(0,0,0,0.7);
-    transition: transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease;
+    transition: transform 0.55s cubic-bezier(.22,1,.36,1), box-shadow 0.55s cubic-bezier(.22,1,.36,1), opacity 0.3s ease, filter 0.3s ease;
+    will-change:transform;
+    transform: translateY(0) scale(1) translateZ(0);
+    backface-visibility:hidden;
   }
-  .spread-slot:not(.disabled):hover{ z-index:999 !important; }
+  .spread-slot:not(.disabled):hover{ z-index:999 !important; transition: transform 0.68s cubic-bezier(.16,1,.3,1), opacity 0.45s ease, z-index 0s; }
   .spread-slot:not(.disabled):hover .card-back-face{
-    transform: translateY(-22px) scale(1.12);
-    box-shadow: 0 0 0 1px rgba(244,211,94,0.85), 0 0 30px rgba(232,56,13,0.55), 0 26px 38px -10px rgba(0,0,0,0.85);
+    transform: translateY(-26px) scale(1.12) translateZ(0);
+    box-shadow: 0 0 0 1px rgba(244,211,94,0.85), 0 0 34px rgba(232,56,13,0.55), 0 30px 42px -10px rgba(0,0,0,0.85);
   }
   .spread-slot.disabled{ cursor:default; }
   .spread-slot.disabled .card-back-face{ opacity:0.32; filter:grayscale(0.4); }
@@ -415,14 +429,21 @@
   .icon-btn:hover{ background: rgba(232,56,13,0.18); border-color: var(--flame); color: var(--flame); }
   .icon-btn[aria-pressed="true"]{ color: var(--flame); border-color: var(--flame); background: rgba(232,56,13,0.22); }
 
-  @media (max-width: 900px){
-    body{ padding: 44px 18px 70px; }
-  }
   @media (max-width: 560px){
-    body{ padding: 32px 12px 56px; }
-    .header{ margin-bottom: 30px; }
-    .table-area{ padding:26px 10px; }
-    .fan-container{ --fan-height: 220px; }
+    .table-area{ padding: clamp(4px,1.2vh,20px) 10px; }
+    .action-btn{ padding:10px 18px; font-size:12px; }
+  }
+  @media (max-height: 620px){
+    h1{ font-size:clamp(22px, 4vh + 2vw, 40px); }
+    .status-bar{ font-size:10px; }
+    .table-hint{ font-size:10px; margin-top:6px; }
+    .panel-actions{ margin-top:8px; gap:10px; }
+    .action-btn{ padding:8px 16px; font-size:11px; }
+  }
+  @media (orientation: landscape) and (max-height: 480px){
+    .detail-top, .status-bar{ display:none; }
+    .header{ margin-bottom:6px; }
+    h1{ font-size:clamp(18px, 5vh, 30px); }
   }
 </style>
 </head>
@@ -437,7 +458,6 @@
   </div>
 
   <div class="header">
-    <div class="eyebrow">Muốn chiến thì chiến - Vượt mọi chông gai</div>
     <h1>Rút Thẻ</h1>
   </div>
 
@@ -829,11 +849,44 @@ function spreadCards(){
     slots.push(slot);
   });
 
-  // Đo kích thước thật của thẻ + khung chứa (offsetWidth/Height không bị ảnh hưởng bởi transform)
-  // để tính cung & bán kính vừa khít, không bao giờ tràn màn hình hay bị cắt.
-  const cardW = slots[0].offsetWidth || 130;
-  const cardH = slots[0].offsetHeight || Math.round(cardW * 2048 / 1635);
+  computeAndApplyFanLayout(slots, { animateIn: true });
+}
+
+// Đo kích thước thật của thẻ + khung chứa (offsetWidth/Height không bị ảnh hưởng bởi transform)
+// để tính cung & bán kính vừa khít, không bao giờ tràn màn hình hay bị cắt (dùng chung cho
+// lần trải bài đầu tiên lẫn khi resize/xoay màn hình).
+function computeAndApplyFanLayout(slots, opts){
+  opts = opts || {};
+  const n = slots.length;
+  if(n === 0) return;
+  const fan = document.getElementById('spreadGrid');
+
+  fan.style.removeProperty('--card-w');
+  let cardW = slots[0].offsetWidth || 130;
+  let cardH = slots[0].offsetHeight || Math.round(cardW * 2048 / 1635);
   const containerWidth = fan.clientWidth || window.innerWidth - 40;
+
+  // Ngân sách chiều cao thực sự còn trống trong khung bàn (table-area), trừ đi phần
+  // hint + nút bấm, để đảm bảo phần hiển thị luôn cố định, không bao giờ phải cuộn trang.
+  const tableArea = fan.closest('.table-area');
+  const hintEl = document.getElementById('tableHint');
+  const panelActions = document.querySelector('.panel-actions');
+  let heightBudget = fan.clientHeight;
+  if(tableArea){
+    const reserved = (hintEl ? hintEl.offsetHeight : 0) + (panelActions ? panelActions.offsetHeight : 0) + 24;
+    heightBudget = Math.max(80, tableArea.clientHeight - reserved);
+  }
+
+  // Nếu ngay cả ở bán kính nhỏ nhất, thẻ vẫn không vừa chiều cao còn trống,
+  // tự động thu nhỏ kích thước thẻ theo tỉ lệ tương ứng (co giãn theo màn hình).
+  const minRadius = cardH * 0.55;
+  const neededHeight = minRadius + cardH + 36;
+  if(neededHeight > heightBudget){
+    const scale = Math.max(0.4, heightBudget / neededHeight);
+    fan.style.setProperty('--card-w', (cardW * scale) + 'px');
+    cardW = Math.round(cardW * scale);
+    cardH = Math.round(cardH * scale);
+  }
 
   // Giới hạn cung quạt tối đa ~130° (nửa cung 65°) để thẻ không bao giờ bị xoay quá ngang.
   const totalArc = Math.min(130, Math.max(34, n * 2.7));
@@ -841,23 +894,47 @@ function spreadCards(){
   const angleStep = n > 1 ? totalArc / (n - 1) : 0;
   const startAngle = -totalArc / 2;
 
-  // Bán kính mong muốn theo số lượng thẻ, nhưng không vượt quá bề ngang khung chứa.
+  // Bán kính mong muốn theo số lượng thẻ, nhưng không vượt quá bề ngang khung chứa
+  // lẫn chiều cao còn trống của khung bàn.
   const desiredRadius = Math.round(170 + Math.min(n, 44) * 2.6);
   const maxRadiusByWidth = Math.round((containerWidth / 2 - cardW * 0.5) / Math.sin(Math.max(halfArcRad, 0.05)));
-  const radius = Math.max(cardH * 0.55, Math.min(desiredRadius, maxRadiusByWidth));
+  const maxRadiusByHeight = Math.max(cardH * 0.55, heightBudget - cardH - 36);
+  const radius = Math.max(cardH * 0.55, Math.min(desiredRadius, maxRadiusByWidth, maxRadiusByHeight));
 
   const fanHeight = Math.round(radius + cardH + 36);
   fan.style.setProperty('--fan-height', fanHeight + 'px');
 
   slots.forEach((slot, i) => {
     const angle = n > 1 ? startAngle + i * angleStep : 0;
-    // bay ra & xoè thành hình quạt, so le theo thứ tự lá bài
-    const delay = Math.min(i * 14, 560);
-    setTimeout(() => {
-      slot.style.transform = `rotate(${angle.toFixed(2)}deg) translateY(-${radius}px) scale(1)`;
+    const finalTransform = `rotate(${angle.toFixed(2)}deg) translateY(-${radius}px) scale(1)`;
+    if(opts.animateIn){
+      // bay ra & xoè thành hình quạt, so le theo thứ tự lá bài
+      const delay = Math.min(i * 14, 560);
+      setTimeout(() => {
+        slot.style.transform = finalTransform;
+        slot.style.opacity = '1';
+      }, delay);
+    } else {
+      // resize/xoay màn hình: chỉ định vị lại tức thì, không lặp lại hiệu ứng bay ra
+      slot.style.transform = finalTransform;
       slot.style.opacity = '1';
-    }, delay);
+    }
   });
+}
+
+// Khi resize / xoay màn hình: tính lại & đặt lại vị trí các thẻ đang trải trên bàn
+// (không xáo lại thứ tự, không ảnh hưởng thẻ đã được rút) để trang luôn vừa khít, không cuộn.
+function relayoutFan(){
+  const fan = document.getElementById('spreadGrid');
+  if(!fan || fan.hidden || revealing) return;
+  const slots = Array.from(fan.querySelectorAll('.spread-slot'));
+  if(slots.length === 0) return;
+  const prevTransition = slots.map(s => s.style.transition);
+  slots.forEach(s => { s.style.transition = 'none'; });
+  computeAndApplyFanLayout(slots, { animateIn: false });
+  // ép trình duyệt áp dụng ngay rồi trả lại transition mượt cho các tương tác sau đó
+  void fan.offsetWidth;
+  slots.forEach((s, i) => { s.style.transition = prevTransition[i]; });
 }
 
 function pickCard(index){
@@ -1173,6 +1250,20 @@ loop();
 /* ============================================================
    GẮN SỰ KIỆN NÚT & KHỞI ĐỘNG
    ============================================================ */
+
+let resizeRAF = null;
+function scheduleRelayout(){
+  if(resizeRAF) cancelAnimationFrame(resizeRAF);
+  resizeRAF = requestAnimationFrame(relayoutFan);
+}
+window.addEventListener('resize', scheduleRelayout);
+window.addEventListener('orientationchange', () => setTimeout(relayoutFan, 60));
+// Theo dõi thêm visualViewport: xử lý các trường hợp thanh địa chỉ trình duyệt
+// di động tự ẩn/hiện làm thay đổi chiều cao khả dụng, để bố trí luôn vừa khít,
+// không bao giờ phải cuộn trang trên bất kỳ thiết bị nào.
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', scheduleRelayout);
+}
 
 document.getElementById('shuffleBtn').addEventListener('click', async () => {
   document.getElementById('deckStack').style.display = '';
