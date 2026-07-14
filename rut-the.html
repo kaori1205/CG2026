@@ -258,6 +258,7 @@
     transform: translate(-50%,-50%) translate(var(--tx,0px), var(--ty,0px)) rotate(var(--rot,0deg)) scale(var(--sc,1));
     transition: transform 0.85s cubic-bezier(.22,.85,.3,1), opacity 0.55s ease;
     opacity:1;
+    perspective: 1200px;
     will-change: transform;
   }
   .sc-wobble{
@@ -270,6 +271,14 @@
     0%,100%{ transform: rotate(0deg) translateY(0); }
     50%{ transform: rotate(1.1deg) translateY(-1.5px); }
   }
+  /* Khối lật thẻ (mặt sau -> mặt trước) dùng cho thẻ trúng thưởng khi rút */
+  .sc-flip{
+    position:relative;
+    width:100%; height:100%;
+    transform-style: preserve-3d;
+    transition: transform 0.85s cubic-bezier(.4,.08,.2,1);
+  }
+  .sc-flip.is-flipped{ transform: rotateY(180deg); }
   .sc-face{
     position:relative;
     width:100%; height:100%;
@@ -282,6 +291,12 @@
       0 10px 22px -8px rgba(0,0,0,0.75),
       0 0 18px rgba(232,56,13,0.32);
   }
+  .sc-flip-face{
+    position:absolute; inset:0;
+    backface-visibility:hidden;
+    -webkit-backface-visibility:hidden;
+  }
+  .sc-flip-front{ transform: rotateY(180deg); }
   .sc-inner{
     width:100%; height:100%;
     border-radius: calc(var(--radius-deck) - 1.4px);
@@ -297,6 +312,13 @@
     background-size:cover;
     background-position:center;
   }
+  /* Mặt trước — ảnh thẻ thật, được gán bằng JS đúng lúc lật khi rút trúng */
+  .sc-art-front{
+    background-image:none;
+    background-size:cover;
+    background-position:center;
+    background-color: var(--iron);
+  }
   .sc-inner::before{
     content:"";
     position:absolute; inset:0;
@@ -304,6 +326,7 @@
     border-radius: calc(var(--radius-deck) - 1.4px);
     pointer-events:none;
   }
+
 
   .draw-btn{
     position:fixed;
@@ -390,6 +413,18 @@
     justify-content:center;
     perspective: 1000px;
     touch-action:none;
+  }
+  .stage.awaiting-flip{ cursor:pointer; }
+  .stage.awaiting-flip .card-wrap{ cursor:pointer; }
+  /* Các hiệu ứng loé sáng/sốc/tàn lửa/toả tia chỉ nên chạy sau khi người
+     dùng bấm lật thẻ — khoá chúng lại trong lúc còn đang chờ lật. */
+  body.awaiting-flip .reveal-flash,
+  body.awaiting-flip .shockwave,
+  body.awaiting-flip .ember,
+  body.awaiting-flip .reveal-burst,
+  body.awaiting-flip .reveal-burst::before{
+    animation: none;
+    opacity:0;
   }
 
   .card-wrap{
@@ -575,10 +610,31 @@
   .card-back{
     position:absolute; inset:0;
     border-radius: var(--radius);
-    background-image: linear-gradient(135deg, #f4ecd6 0%, #c9ccd0 18%, #8a8f96 32%, #f4ecd6 48%, #b8862f 60%, #8a8f96 78%, #d7dbe0 100%);
-    filter: brightness(0.45) saturate(0.9);
-    transform: translateZ(calc(var(--card-depth) / -2));
+    overflow:hidden;
+    background: var(--iron);
+    padding:4px;
+    transform: rotateY(180deg) translateZ(calc(var(--card-depth) / 2));
+    box-shadow:
+      0 0 0 2px rgba(244,211,94,0.8),
+      0 0 0 3.5px rgba(10,5,3,0.55),
+      0 0 44px rgba(232,56,13,0.4),
+      0 22px 44px -14px rgba(0,0,0,0.85),
+      inset 0 1px 0 rgba(255,255,255,0.5),
+      inset 0 -2px 3px rgba(0,0,0,0.35),
+      inset 2px 0 3px rgba(255,255,255,0.15),
+      inset -2px 0 3px rgba(0,0,0,0.25);
+    background-image:
+      linear-gradient(135deg, #f4ecd6 0%, #c9ccd0 18%, #8a8f96 32%, #f4ecd6 48%, #b8862f 60%, #8a8f96 78%, #d7dbe0 100%);
     pointer-events:none;
+  }
+  .card-back-art{
+    width:100%; height:100%;
+    border-radius: calc(var(--radius) - 2px);
+    overflow:hidden;
+    background-image: var(--back-card-img);
+    background-size:cover;
+    background-position:center;
+    background-color: var(--iron);
   }
   .card-side{ position:absolute; background-image: linear-gradient(90deg, #d7dbe0 0%, #8a8f96 35%, #f4ecd6 55%, #8a8f96 80%, #d7dbe0 100%); filter: brightness(0.5); pointer-events:none; }
   .side-right, .side-left{ top:0; width: var(--card-depth); height:100%; }
@@ -701,7 +757,7 @@
       <div class="card-wrap" id="cardWrap">
         <div class="card-inner" id="cardInner">
           <div class="card-shadow"></div>
-          <div class="card-back"></div>
+          <div class="card-back"><div class="card-back-art"></div></div>
           <div class="card-side side-top"></div>
           <div class="card-side side-bottom"></div>
           <div class="card-side side-left"></div>
@@ -730,7 +786,7 @@
       </div>
     </div>
 
-    <div class="hint">Di chuột hoặc chạm để xoay thẻ</div>
+    <div class="hint" id="hintText">Chạm vào thẻ để lật</div>
 
     <div class="action-bar">
       <button class="icon-btn" id="soundToggle" title="Bật âm thanh" aria-pressed="false">🔇</button>
@@ -926,9 +982,16 @@ for(let i = 0; i < N_DECK; i++){
   card.style.zIndex = N_DECK - i;
   card.innerHTML = `
     <div class="sc-wobble" style="--wob-dur:${rand(2.2,3.4)}s; --wob-delay:${rand(0,3)}s;">
-      <div class="sc-face">
-        <div class="sc-inner">
-          <div class="sc-art"></div>
+      <div class="sc-flip">
+        <div class="sc-face sc-flip-face sc-flip-back">
+          <div class="sc-inner">
+            <div class="sc-art"></div>
+          </div>
+        </div>
+        <div class="sc-face sc-flip-face sc-flip-front">
+          <div class="sc-inner">
+            <div class="sc-art sc-art-front"></div>
+          </div>
         </div>
       </div>
     </div>`;
@@ -936,7 +999,10 @@ for(let i = 0; i < N_DECK; i++){
   shuffleEls.push(card);
 }
 measureCardWidth();
-window.addEventListener('resize', measureCardWidth);
+window.addEventListener('resize', () => {
+  measureCardWidth();
+  if(currentLayoutIsFan) layoutFan(currentOrder);
+});
 
 function setXform(el, tx, ty, rot, sc){
   el.style.setProperty('--tx', tx.toFixed(1) + 'px');
@@ -947,6 +1013,7 @@ function setXform(el, tx, ty, rot, sc){
 
 // "Xáo": chồng thành cọc thẻ gọn, hơi lệch ngẫu nhiên như đang được xóc
 function layoutStack(order){
+  currentLayoutIsFan = false;
   const jitter = cardWidth * 0.018;
   order.forEach((el, i) => {
     el.style.zIndex = N_DECK - i;
@@ -956,19 +1023,38 @@ function layoutStack(order){
 }
 
 // "Trải": xoè thẻ ra thành hình quạt
+const CARD_RATIO_WH = 1635 / 2048; // trùng với --card-ratio ở :root (width / height)
+const FAN_ANGLE_STEP = 4.2; // độ cong của quạt — giảm so với trước (7.2) để bớt cong hơn
+let currentLayoutIsFan = false;
+
 function layoutFan(order){
+  currentLayoutIsFan = true;
   const n = order.length;
   const mid = (n - 1) / 2;
-  const spacing = cardWidth * 0.34;
-  const dip = cardWidth * 0.075;
+  const baseSpacing = cardWidth * 0.34;
+  const dip = cardWidth * 0.045;
+  const cardHeight = cardWidth / CARD_RATIO_WH;
+
+  // Co giãn cả quạt (không chỉ khoảng cách) để 2 thẻ ngoài cùng luôn nằm
+  // gọn trong màn hình, tránh bị mất/cắt cạnh ở 2 bên trên màn hình hẹp.
+  const maxT = mid;
+  const angleRad = (maxT * FAN_ANGLE_STEP) * Math.PI / 180;
+  const projectedHalfW = (cardWidth / 2) * Math.cos(angleRad) + (cardHeight / 2) * Math.sin(angleRad);
+  const outerEdge = maxT * baseSpacing + projectedHalfW;
+  const availableHalf = window.innerWidth / 2 - 14;
+  let fanScale = 1;
+  if(outerEdge > 0 && outerEdge > availableHalf){
+    fanScale = Math.max(0.5, availableHalf / outerEdge);
+  }
+
   order.forEach((el, i) => {
     const t = i - mid;
-    const angle = t * 7.2;
-    const tx = t * spacing;
-    const ty = Math.pow(Math.abs(t), 1.5) * dip;
+    const angle = t * FAN_ANGLE_STEP;
+    const tx = t * baseSpacing * fanScale;
+    const ty = Math.pow(Math.abs(t), 1.5) * dip * fanScale;
     el.style.zIndex = 100 - Math.round(Math.abs(t) * 2);
     el.style.transition = 'transform 0.95s cubic-bezier(.22,.85,.3,1), opacity 0.4s ease';
-    setXform(el, tx, ty, angle, 1);
+    setXform(el, tx, ty, angle, fanScale);
   });
 }
 
@@ -1051,14 +1137,14 @@ async function startDrawSequence(){
   layoutStack(currentOrder);
   await wait(900);
 
-  // Bước 2 — thẻ trúng dâng lên & phóng to nhẹ, các thẻ còn lại văng ra
-  // (khớp transition 0.9s / 0.75s đã khai báo cho từng thẻ)
+  // Bước 2 — thẻ trúng dâng lên, về đúng giữa màn hình & phóng to nhẹ,
+  // các thẻ còn lại văng ra (khớp transition 0.9s / 0.75s đã khai báo cho từng thẻ)
   const winnerEl = currentOrder[0];
   currentOrder.forEach((el) => {
     if(el === winnerEl){
       el.style.zIndex = 999;
       el.style.transition = 'transform 0.9s cubic-bezier(.2,.8,.2,1)';
-      setXform(el, 0, -18, 0, 1.55);
+      setXform(el, 0, 0, 0, 1.55);
     } else {
       const ang = rand(0, Math.PI * 2);
       const dist = rand(cardWidth * 2.2, cardWidth * 4.4);
@@ -1069,12 +1155,15 @@ async function startDrawSequence(){
   });
   await wait(900);
 
-  // Đảm bảo đã có kết quả (thẻ thật) trước khi loé sáng chuyển cảnh
+  // Cần có kết quả (thẻ thật) trước khi loé sáng chuyển cảnh
   const pool = await poolPromise;
   const card = pickRandomCard(pool);
 
   // Bước 3 — loé sáng toàn màn hình; đợi đúng lúc gần đỉnh sáng nhất
-  // rồi mới đổi DOM phía sau, để người xem không thấy điểm "cắt cảnh"
+  // rồi mới đổi DOM phía sau, để người xem không thấy điểm "cắt cảnh".
+  // Màn hình reveal xuất hiện ngay với thẻ ở mặt sau, thông tin góc phải
+  // ẩn cho tới khi người dùng bấm/chạm vào thẻ để lật sang mặt trước —
+  // toàn bộ hiệu ứng ánh sáng/hologram của reveal chỉ chạy từ lúc đó.
   screenFlash.classList.remove('active');
   void screenFlash.offsetWidth;
   screenFlash.classList.add('active');
@@ -1095,10 +1184,13 @@ drawBtn.addEventListener('click', () => {
 
 redrawBtn.addEventListener('click', () => {
   document.body.classList.remove('phase-reveal');
+  document.body.classList.remove('awaiting-flip');
   drawBtn.disabled = false;
 
   shuffleEls.forEach((el) => {
     el.style.opacity = '1';
+    const flipEl = el.querySelector('.sc-flip');
+    if(flipEl) flipEl.classList.remove('is-flipped');
   });
   currentOrder = shuffleEls.slice();
   stopped = false;
@@ -1114,15 +1206,25 @@ const cardArtEl = document.getElementById('cardArt');
 const labelBox = document.getElementById('labelBox');
 const labelNum = document.getElementById('labelNum');
 const labelTitle = document.getElementById('labelTitle');
+const hintText = document.getElementById('hintText');
+let pendingRevealCard = null;
 
 function showReveal(card){
   bgImgEl.style.backgroundImage = `url('${card.img}')`;
   cardArtEl.style.backgroundImage = `url('${card.img}')`;
 
-  labelBox.style.display = '';
+  // Ẩn thông tin góc phải cho tới khi người dùng bấm lật thẻ.
+  labelBox.style.display = 'none';
   labelNum.textContent = card.source || '';
   labelNum.title = card.source || '';
   labelTitle.textContent = MUC_TITLES[card.muc] || '';
+
+  pendingRevealCard = card;
+  cardFlipped = false;
+  curFlipY = 180; targetFlipY = 180; // thẻ nằm ở mặt sau, chờ người dùng lật
+  stage.classList.add('awaiting-flip');
+  document.body.classList.add('awaiting-flip');
+  if(hintText){ hintText.textContent = 'Chạm vào thẻ để lật'; replayAnim(hintText); }
 
   document.body.classList.add('phase-reveal');
 
@@ -1132,14 +1234,28 @@ function showReveal(card){
   curGlow = 0; targetGlow = 0;
   curScale = 1; targetScale = 1;
 
-  // phát lại toàn bộ animation mở thẻ từ đầu
+  // Chỉ phát lại animation "rơi vào giữa" của khung thẻ; các hiệu ứng
+  // loé sáng/sốc/tàn lửa sẽ chờ tới khi người dùng bấm vào thẻ để lật.
   replayAnim(document.getElementById('cardWrap'));
+}
+
+// Lật thẻ từ mặt sau sang mặt trước khi người dùng bấm/chạm vào thẻ;
+// đây cũng là lúc toàn bộ hiệu ứng reveal (loé sáng, sốc, tàn lửa, hologram) bắt đầu chạy.
+function triggerCardFlip(){
+  if(cardFlipped || !document.body.classList.contains('phase-reveal')) return;
+  cardFlipped = true;
+  targetFlipY = 0;
+  stage.classList.remove('awaiting-flip');
+  document.body.classList.remove('awaiting-flip');
+
+  labelBox.style.display = '';
+  if(hintText){ hintText.textContent = 'Di chuột hoặc chạm để xoay thẻ'; replayAnim(hintText); }
+
+  // phát lại toàn bộ hiệu ứng mở thẻ từ đầu
   replayAnim(document.getElementById('revealBurst'));
   replayAnim(document.getElementById('shockwave'));
   replayAnim(document.getElementById('revealFlash'));
   document.querySelectorAll('#revealFlash .ember').forEach(replayAnim);
-
-  applyAdaptiveTheme(card.img);
 }
 
 /* ---------- Tự nhận diện độ sáng nền ảnh để đổi màu chữ/khung sáng-tối ---------- */
@@ -1200,29 +1316,10 @@ function sampleLuminanceForElement(ctx, cw, ch, ratio, imgNaturalW, imgNaturalH,
 }
 
 function recomputeTheme(){
-  if(!cachedThemeImg) return;
-  const img = cachedThemeImg;
-  // Nút "Trang chủ" giữ cố định kiểu viền vàng (giống nút "Rút Thẻ Khác" bên dưới),
-  // không đổi màu theo nền nữa để tránh bị chìm vào ảnh.
-  const labelEl = labelBox;
-  try{
-    const maxDim = 320;
-    const ratio = Math.min(1, maxDim / Math.max(img.naturalWidth, img.naturalHeight));
-    const cw = Math.max(1, Math.round(img.naturalWidth * ratio));
-    const ch = Math.max(1, Math.round(img.naturalHeight * ratio));
-    const canvas = document.createElement('canvas');
-    canvas.width = cw; canvas.height = ch;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(img, 0, 0, cw, ch);
-
-    const labelLum = sampleLuminanceForElement(ctx, cw, ch, ratio, img.naturalWidth, img.naturalHeight, labelEl);
-
-    const labelDark = shouldUseDarkText(labelLum);
-    labelEl.classList.toggle('is-light', labelDark);
-    labelEl.classList.toggle('is-dark', !labelDark);
-  }catch(err){
-    labelEl.classList.add('is-dark');
-  }
+  // Tên mục (label) khi reveal thẻ giữ cố định màu trắng (is-dark) vì nền
+  // luôn tối màu — không tự đổi màu theo độ sáng ảnh thẻ nữa (tránh nhảy màu).
+  labelBox.classList.remove('is-light');
+  labelBox.classList.add('is-dark');
 }
 
 function applyAdaptiveTheme(src){
@@ -1302,6 +1399,7 @@ let targetRX = 0, targetRY = 0, curRX = 0, curRY = 0;
 let targetPX = 50, targetPY = 50, curPX = 50, curPY = 50;
 let targetGlow = 0, curGlow = 0;
 let targetScale = 1, curScale = 1;
+let targetFlipY = 0, curFlipY = 0, cardFlipped = false;
 let pointerActive = false;
 let idleT = Math.random() * 10;
 let jitterX = 0, jitterY = 0;
@@ -1332,6 +1430,12 @@ stage.addEventListener('pointerleave', onPointerLeave);
 stage.addEventListener('pointercancel', onPointerLeave);
 stage.addEventListener('pointerdown', onPointerMove);
 
+// Chạm/bấm vào thẻ (hoặc bất cứ đâu trên sân khấu, để dễ bấm trên di động)
+// trong lúc đang chờ lật sẽ kích hoạt lật thẻ sang mặt trước.
+stage.addEventListener('click', () => {
+  if(stage.classList.contains('awaiting-flip')) triggerCardFlip();
+});
+
 function loop(){
   if(document.body.classList.contains('phase-reveal') && !pointerActive){
     idleT += 0.008;
@@ -1353,8 +1457,9 @@ function loop(){
   curPY += (targetPY - curPY) * 0.08;
   curGlow += (targetGlow - curGlow) * 0.08;
   curScale += (targetScale - curScale) * 0.08;
+  curFlipY += (targetFlipY - curFlipY) * 0.09;
 
-  cardInner.style.transform = `scale(${curScale}) rotateX(${curRX}deg) rotateY(${curRY}deg)`;
+  cardInner.style.transform = `scale(${curScale}) rotateX(${curRX}deg) rotateY(${curRY + curFlipY}deg)`;
   cardShadowEl.style.transform = `translateZ(-40px) translateX(${curRY * -1.6}px) translateY(${curRX * 1.2}px) scale(${1 - Math.abs(curRY) * 0.006}, ${1 - Math.abs(curRX) * 0.006})`;
   holoSheen.style.backgroundPosition = `${curPX}% ${curPY}%, ${100 - curPX}% ${100 - curPY}%`;
   shineSweep.style.backgroundPosition = `${curPX}% ${curPY}%`;
