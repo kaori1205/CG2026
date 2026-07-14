@@ -172,6 +172,7 @@
   }
 
   .card-wrap{
+    position:relative;
     width:var(--card-w);
     aspect-ratio: var(--card-ratio);
     animation: introDrop 0.9s cubic-bezier(.2,.9,.25,1) both;
@@ -182,6 +183,45 @@
   @keyframes introDrop{
     from{ opacity:0; transform: translateY(-42px) scale(0.86); }
     to{ opacity:1; transform: translateY(0) scale(1); }
+  }
+  /* Bùng lửa khi thẻ vừa xuất hiện, giống cảm giác "thẻ được nung/rèn ra" -> đúng theme lửa/than của web */
+  .reveal-flash{
+    position:absolute; inset:0;
+    border-radius: var(--radius);
+    background: radial-gradient(circle at 50% 62%,
+      rgba(255,200,110,0.95) 0%,
+      rgba(255,138,30,0.7) 26%,
+      rgba(232,56,13,0.45) 46%,
+      rgba(244,211,94,0.15) 62%,
+      transparent 76%);
+    opacity:0;
+    pointer-events:none;
+    animation: revealFlash 1.25s ease-out 0.2s both;
+    mix-blend-mode: screen;
+    z-index:3;
+  }
+  @keyframes revealFlash{
+    0%{ opacity:0; transform:scale(0.5); filter:brightness(1.3) saturate(1.1); }
+    28%{ opacity:1; transform:scale(1.08); filter:brightness(1.7) saturate(1.3); }
+    100%{ opacity:0; transform:scale(1.5); filter:brightness(1) saturate(1); }
+  }
+  /* Đốm lửa/than hồng bắn lên khi bùng lửa, bay lên rồi tắt dần như tàn lửa thật */
+  .ember{
+    position:absolute;
+    bottom:8%;
+    width:5px; height:5px;
+    border-radius:50%;
+    background: radial-gradient(circle, var(--gold) 0%, var(--flame) 55%, transparent 78%);
+    box-shadow: 0 0 6px 1px rgba(255,138,30,0.8);
+    opacity:0;
+    animation: emberRise 1.3s ease-out both;
+    pointer-events:none;
+  }
+  @keyframes emberRise{
+    0%{ opacity:0; transform: translate(0,0) scale(0.6); }
+    16%{ opacity:1; }
+    70%{ opacity:0.8; }
+    100%{ opacity:0; transform: translate(var(--drift, 0px), -150px) scale(0.15); }
   }
 
   .card-inner{
@@ -240,6 +280,7 @@
   .holo-sheen{
     position:absolute; inset:4px;
     border-radius: calc(var(--radius) - 1px);
+    transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     background:
       repeating-linear-gradient(115deg,
         rgba(255,46,151,0.5) 0%,
@@ -260,6 +301,7 @@
   .holo-glare{
     position:absolute; inset:4px;
     border-radius: calc(var(--radius) - 1px);
+    transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     background: radial-gradient(circle at var(--gx,50%) var(--gy,50%),
       rgba(255,255,255,0.95) 0%,
       rgba(255,222,244,0.55) 6%,
@@ -272,6 +314,7 @@
   .holo-edge{
     position:absolute; inset:0;
     border-radius: var(--radius);
+    transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.35);
     opacity: var(--edge-op, 0);
     pointer-events:none;
@@ -281,6 +324,7 @@
   .card-grain{
     position:absolute; inset:0;
     border-radius: calc(var(--radius) - 1px);
+    transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     opacity:0.05;
     mix-blend-mode: overlay;
     pointer-events:none;
@@ -331,6 +375,7 @@
   .shine-sweep{
     position:absolute; inset:4px;
     border-radius: calc(var(--radius) - 1px);
+    transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     background: linear-gradient(75deg,
       transparent 32%,
       rgba(255,255,255,0.5) 46%,
@@ -358,6 +403,63 @@
   }
   @keyframes hintFade{
     0%{opacity:0;} 15%{opacity:1;} 75%{opacity:1;} 100%{opacity:0;}
+  }
+
+  /* Hạt sáng lấp lánh, xuất hiện ngẫu nhiên khi nghiêng thẻ mạnh -> tăng cảm giác "hiếm/foil" */
+  .sparkle-layer{
+    position:absolute; inset:0;
+    border-radius: calc(var(--radius) - 1px);
+    overflow:hidden;
+    pointer-events:none;
+    transform: translateZ(calc(var(--card-depth) / 2 + 3px));
+  }
+  .sparkle{
+    position:absolute;
+    width:6px; height:6px;
+    margin:-3px 0 0 -3px;
+    background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0.7) 45%, transparent 72%);
+    border-radius:50%;
+    opacity:0;
+    animation: sparklePop 850ms ease-out forwards;
+  }
+  @keyframes sparklePop{
+    0%{ opacity:0; transform:scale(0.2); }
+    30%{ opacity:1; transform:scale(1.4); }
+    100%{ opacity:0; transform:scale(0.3); }
+  }
+
+  /* ---------- Thanh hành động: âm thanh / lưu ảnh / chia sẻ ---------- */
+  .action-bar{
+    position:fixed;
+    right:20px;
+    bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px));
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    z-index:10;
+  }
+  .icon-btn{
+    width:42px; height:42px;
+    border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    background: rgba(10,5,3,0.45);
+    backdrop-filter: blur(6px);
+    border:1px solid rgba(244,211,94,0.4);
+    color: var(--gold);
+    font-size:17px;
+    line-height:1;
+    cursor:pointer;
+    transition: all 0.25s ease;
+  }
+  .icon-btn:hover{
+    background: rgba(232,56,13,0.18);
+    border-color: var(--flame);
+    color: var(--flame);
+  }
+  .icon-btn[aria-pressed="true"]{
+    color: var(--flame);
+    border-color: var(--flame);
+    background: rgba(232,56,13,0.22);
   }
 
   @media (max-width:560px){
@@ -395,11 +497,24 @@
         <div class="holo-glare" id="holoGlare"></div>
         <div class="holo-edge" id="holoEdge"></div>
         <div class="card-grain"></div>
+        <div class="sparkle-layer" id="sparkleLayer"></div>
+      </div>
+      <div class="reveal-flash">
+        <span class="ember" style="left:28%; animation-delay:0.05s; --drift:-14px;"></span>
+        <span class="ember" style="left:42%; animation-delay:0.18s; animation-duration:1.5s; --drift:8px;"></span>
+        <span class="ember" style="left:58%; animation-delay:0.02s; --drift:-6px;"></span>
+        <span class="ember" style="left:66%; animation-delay:0.3s; animation-duration:1.1s; --drift:18px;"></span>
+        <span class="ember" style="left:50%; animation-delay:0.24s; --drift:-20px;"></span>
+        <span class="ember" style="left:35%; animation-delay:0.4s; animation-duration:1.4s; --drift:10px;"></span>
       </div>
     </div>
   </div>
 
   <div class="hint">Di chuột hoặc chạm để xoay thẻ</div>
+
+  <div class="action-bar">
+    <button class="icon-btn" id="soundToggle" title="Bật âm thanh" aria-pressed="false">🔇</button>
+  </div>
 
 <script>
   const params = new URLSearchParams(location.search);
@@ -564,6 +679,16 @@
     }
   });
 
+  // ---------- Nút bật/tắt âm thanh ----------
+  const soundToggle = document.getElementById('soundToggle');
+  soundToggle.addEventListener('click', () => {
+    soundEnabled = !soundEnabled;
+    soundToggle.setAttribute('aria-pressed', String(soundEnabled));
+    soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
+    soundToggle.title = soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh';
+    if(soundEnabled) ensureAudioCtx();
+  });
+
   // ---------- Hiệu ứng nghiêng / xoay / hologram ----------
   const stage = document.getElementById('stage');
   const cardInner = document.getElementById('cardInner');
@@ -571,6 +696,50 @@
   const holoGlare = document.getElementById('holoGlare');
   const holoEdge = document.getElementById('holoEdge');
   const shineSweep = document.getElementById('shineSweep');
+  const sparkleLayer = document.getElementById('sparkleLayer');
+
+  // ---------- Âm thanh nhẹ khi tương tác (mặc định tắt, người dùng tự bật) ----------
+  let audioCtx = null;
+  let soundEnabled = false;
+  let lastChimeTime = 0;
+
+  function ensureAudioCtx(){
+    if(!audioCtx){
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    return audioCtx;
+  }
+
+  function playChime(){
+    if(!soundEnabled) return;
+    const now = performance.now();
+    if(now - lastChimeTime < 900) return; // chống phát liên tục dồn dập
+    lastChimeTime = now;
+    const ctx = ensureAudioCtx();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(1200, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.12);
+    gain.gain.setValueAtTime(0, ctx.currentTime);
+    gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.5);
+  }
+
+  // ---------- Hạt sáng lấp lánh ngẫu nhiên khi nghiêng mạnh ----------
+  function spawnSparkle(){
+    const el = document.createElement('div');
+    el.className = 'sparkle';
+    el.style.left = (8 + Math.random() * 84) + '%';
+    el.style.top = (8 + Math.random() * 84) + '%';
+    el.style.animationDuration = (650 + Math.random() * 500) + 'ms';
+    sparkleLayer.appendChild(el);
+    el.addEventListener('animationend', () => el.remove());
+    playChime();
+  }
   const cardShadowEl = document.querySelector('.card-shadow');
 
   let targetRX = 0, targetRY = 0, curRX = 0, curRY = 0;
@@ -636,6 +805,10 @@
     cardShadowEl.style.transform = `translateZ(-40px) translateX(${curRY * -1.6}px) translateY(${curRX * 1.2}px) scale(${1 - Math.abs(curRY) * 0.006}, ${1 - Math.abs(curRX) * 0.006})`;
     holoSheen.style.backgroundPosition = `${curPX}% ${curPY}%, ${100 - curPX}% ${100 - curPY}%`;
     shineSweep.style.backgroundPosition = `${curPX}% ${curPY}%`;
+
+    if(curGlow > 0.42 && Math.random() < curGlow * 0.05){
+      spawnSparkle();
+    }
     holoGlare.style.setProperty('--gx', curPX + '%');
     holoGlare.style.setProperty('--gy', curPY + '%');
     holoGlare.style.opacity = curGlow;
