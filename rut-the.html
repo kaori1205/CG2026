@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Rút Thẻ Định Mệnh · Hành Trình 2026</title>
+<title>Rút Thẻ · Hành Trình 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Anton&family=Bebas+Neue&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -121,27 +121,45 @@
   .deck-card{
     position:absolute; inset:0; border-radius:var(--radius); overflow:hidden;
     box-shadow: 0 0 0 1px rgba(244,211,94,0.5), 0 14px 26px -10px rgba(0,0,0,0.75);
-    transition: transform 0.5s cubic-bezier(.2,.8,.2,1);
+    transition: transform 0.32s cubic-bezier(.3,.7,.3,1);
   }
   .deck-card.shuffling{ transition: transform 0.28s cubic-bezier(.3,.7,.3,1); }
 
-  .spread-grid{
-    display:flex; flex-wrap:wrap; justify-content:center; gap:22px 18px; max-width:1080px; margin:0 auto;
+  /* ---------- Xáo bài kiểu casino bridge: 2 nửa bài bẻ cong, gài xen kẽ vào giữa ---------- */
+  .riffle-card{
+    position:absolute; inset:0; border-radius:var(--radius); overflow:hidden;
+    box-shadow: 0 0 0 1px rgba(244,211,94,0.5), 0 10px 18px -8px rgba(0,0,0,0.7);
+    transform-origin:50% 82%;
+    animation: riffleArc 0.46s cubic-bezier(.22,.75,.3,1) both;
+    pointer-events:none;
+  }
+  @keyframes riffleArc{
+    0%{ transform: translate(var(--sx),4px) rotate(var(--sr)) scaleY(1) scaleX(1); opacity:0; }
+    14%{ opacity:1; }
+    55%{ transform: translate(calc(var(--sx) * 0.3), -32px) rotate(calc(var(--sr) * 0.28)) scaleY(1.2) scaleX(0.86); }
+    100%{ transform: translate(0,0) rotate(0deg) scaleY(1) scaleX(1); opacity:0.9; }
+  }
+
+  /* ---------- Rút bài kiểu xoè quạt (fan spread) ---------- */
+  .fan-container{
+    position:relative; width:100%; max-width:1200px; margin:34px auto 10px;
+    height: var(--fan-height, 300px); overflow-x:auto; overflow-y:visible;
   }
   .spread-slot{
-    width:var(--card-w); aspect-ratio:var(--card-ratio); position:relative; cursor:pointer;
-    opacity:0; transform: translateY(40px) scale(0.7) rotate(0deg);
-    animation: slotFlyIn 0.55s cubic-bezier(.2,.8,.2,1) forwards;
+    position:absolute; left:50%; bottom:0; width:var(--card-w); aspect-ratio:var(--card-ratio);
+    margin-left: calc(var(--card-w) / -2); cursor:pointer;
+    transform-origin:50% 96%;
+    transition: transform 0.6s cubic-bezier(.16,.85,.24,1), opacity 0.45s ease;
   }
-  @keyframes slotFlyIn{ to{ opacity:1; transform: translateY(0) scale(1) rotate(var(--tilt,0deg)); } }
   .spread-slot .card-back-face{
     position:relative; width:100%; height:100%; border-radius:var(--radius); overflow:hidden;
     box-shadow: 0 0 0 1px rgba(244,211,94,0.5), 0 0 18px rgba(232,56,13,0.3), 0 10px 20px -8px rgba(0,0,0,0.7);
     transition: transform 0.25s cubic-bezier(.2,.8,.2,1), box-shadow 0.25s ease;
   }
+  .spread-slot:not(.disabled):hover{ z-index:999 !important; }
   .spread-slot:not(.disabled):hover .card-back-face{
-    transform: translateY(-8px) scale(1.05);
-    box-shadow: 0 0 0 1px rgba(244,211,94,0.85), 0 0 30px rgba(232,56,13,0.55), 0 22px 34px -10px rgba(0,0,0,0.85);
+    transform: translateY(-22px) scale(1.12);
+    box-shadow: 0 0 0 1px rgba(244,211,94,0.85), 0 0 30px rgba(232,56,13,0.55), 0 26px 38px -10px rgba(0,0,0,0.85);
   }
   .spread-slot.disabled{ cursor:default; }
   .spread-slot.disabled .card-back-face{ opacity:0.32; filter:grayscale(0.4); }
@@ -388,9 +406,10 @@
   .hint.show{ opacity:1; }
 
   .icon-btn{
-    width:42px; height:42px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+    height:38px; padding:0 16px; border-radius:30px; display:flex; align-items:center; justify-content:center;
     background: rgba(10,5,3,0.45); backdrop-filter: blur(6px); border:1px solid rgba(244,211,94,0.4);
-    color: var(--gold); font-size:17px; line-height:1; cursor:pointer; transition: all 0.25s ease;
+    color: var(--gold); font-family:'IBM Plex Mono', monospace; font-size:11px; letter-spacing:0.08em;
+    text-transform:uppercase; line-height:1; cursor:pointer; transition: all 0.25s ease;
     position:fixed; right:20px; bottom: max(20px, env(safe-area-inset-bottom)); z-index:10;
   }
   .icon-btn:hover{ background: rgba(232,56,13,0.18); border-color: var(--flame); color: var(--flame); }
@@ -403,7 +422,7 @@
     body{ padding: 32px 12px 56px; }
     .header{ margin-bottom: 30px; }
     .table-area{ padding:26px 10px; }
-    .spread-grid{ gap:16px 12px; }
+    .fan-container{ --fan-height: 220px; }
   }
 </style>
 </head>
@@ -419,8 +438,7 @@
 
   <div class="header">
     <div class="eyebrow">Muốn chiến thì chiến - Vượt mọi chông gai</div>
-    <h1>Rút Thẻ Định Mệnh</h1>
-    <p class="sub">Xáo bài, trải bài, chọn một lá và để định mệnh hé lộ gương mặt của bạn.</p>
+    <h1>Rút Thẻ</h1>
   </div>
 
   <!-- ============================================================
@@ -458,11 +476,11 @@
 
   <div class="table-area">
     <div class="deck-stack" id="deckStack"></div>
-    <div class="spread-grid" id="spreadGrid" hidden></div>
+    <div class="fan-container" id="spreadGrid" hidden></div>
     <p class="table-hint" id="tableHint">Đang chuẩn bị bộ bài…</p>
     <div class="panel-actions">
-      <button class="action-btn" id="shuffleBtn" disabled>🔀 Xáo Bài</button>
-      <button class="action-btn primary" id="spreadBtn" disabled>🂠 Trải Bài</button>
+      <button class="action-btn" id="shuffleBtn" disabled>Trộn Card</button>
+      <button class="action-btn primary" id="spreadBtn" disabled>Rút Card</button>
     </div>
   </div>
 
@@ -517,13 +535,13 @@
       </div>
 
       <div class="reveal-actions" id="revealActions">
-        <button class="action-btn" id="againBtn">🔁 Rút Thẻ Khác</button>
-        <button class="action-btn primary" id="doneBtn">✓ Xong</button>
+        <button class="action-btn" id="againBtn">Rút Card Khác</button>
+        <button class="action-btn primary" id="doneBtn">Xong</button>
       </div>
     </div>
 
     <div class="hint" id="revealHint">Di chuột hoặc chạm để xoay thẻ</div>
-    <button class="icon-btn" id="soundToggle" title="Bật âm thanh" aria-pressed="false">🔇</button>
+    <button class="icon-btn" id="soundToggle" title="Bật âm thanh" aria-pressed="false">Bật Âm</button>
   </div>
 
 <script>
@@ -634,7 +652,7 @@ async function loadAllCards(){
   }
 
   statusText.innerHTML = `Đã nhận diện <strong>${ALL_CARDS.length}</strong> thẻ có ảnh thật trên <strong>${new Set(ALL_CARDS.map(c => c.pageFile)).size}</strong> công diễn.`;
-  hint.textContent = 'Nhấn "Xáo Bài" rồi "Trải Bài" để bắt đầu…';
+  hint.textContent = 'Nhấn "Trộn Card" rồi "Rút Card" để bắt đầu…';
 
   shuffleBtn.disabled = false;
   spreadBtn.disabled = false;
@@ -679,38 +697,58 @@ function buildDeckStack(){
 
 let shuffled = false;
 
-function shuffleDeck(){
-  const cards = Array.from(document.querySelectorAll('#deckStack .deck-card'));
-  if(cards.length === 0) return Promise.resolve();
-  cards.forEach(c => c.classList.add('shuffling'));
+function wait(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
 
-  let rounds = 0;
-  const maxRounds = 6;
+async function shuffleDeck(){
+  const deckStack = document.getElementById('deckStack');
+  const cards = Array.from(deckStack.querySelectorAll('.deck-card'));
+  if(cards.length === 0) return;
 
-  return new Promise(resolve => {
-    const step = () => {
-      cards.forEach(c => {
-        const rx = (Math.random() - 0.5) * 46;
-        const ry = (Math.random() - 0.5) * 18;
-        const rot = (Math.random() - 0.5) * 24;
-        c.style.transform = `translate(${rx}px, ${ry}px) rotate(${rot}deg)`;
-      });
-      playTick(600 + rounds * 60);
-      rounds++;
-      if(rounds < maxRounds){
-        setTimeout(step, 190);
-      } else {
-        setTimeout(() => {
-          buildDeckStack();
-          cards.forEach(c => c.classList.remove('shuffling'));
-          shuffled = true;
-          document.getElementById('tableHint').textContent = 'Đã xáo xong! Nhấn "Trải Bài" để chọn thẻ.';
-          resolve();
-        }, 220);
-      }
-    };
-    step();
+  const shuffleBtn = document.getElementById('shuffleBtn');
+  const spreadBtn = document.getElementById('spreadBtn');
+  shuffleBtn.disabled = true;
+  spreadBtn.disabled = true;
+  document.getElementById('tableHint').textContent = 'Đang trộn bài…';
+
+  // ---- Bước 1: tách bộ bài thành 2 nửa, bẻ cong như đang cầm trên tay ----
+  const mid = Math.ceil(cards.length / 2);
+  cards.forEach((c, i) => {
+    const inLeft = i < mid;
+    const j = inLeft ? i : i - mid;
+    const side = inLeft ? -1 : 1;
+    c.style.transform = `translate(${side * 60}px, 8px) rotate(${side * (15 + j * 2)}deg)`;
   });
+  playTick(520);
+  await wait(300);
+
+  // ---- Bước 2: gài bài xen kẽ vào giữa (riffle), từng lá bật cong rồi rơi xuống ----
+  const flutterCount = 18;
+  for(let i = 0; i < flutterCount; i++){
+    const fromLeft = i % 2 === 0;
+    const el = document.createElement('div');
+    el.className = 'riffle-card';
+    const back = document.createElement('div');
+    back.className = 'art-back';
+    applyBackArt(back);
+    el.appendChild(back);
+    const startX = fromLeft ? -60 : 60;
+    const startRot = fromLeft ? -20 : 20;
+    el.style.setProperty('--sx', startX + 'px');
+    el.style.setProperty('--sr', startRot + 'deg');
+    el.style.zIndex = 20 + i;
+    deckStack.appendChild(el);
+    playTick(620 + Math.random() * 260);
+    await wait(34);
+  }
+  await wait(380);
+
+  // ---- Bước 3: gộp lại thành bộ bài gọn gàng ----
+  deckStack.querySelectorAll('.riffle-card').forEach(el => el.remove());
+  buildDeckStack();
+  shuffled = true;
+  shuffleBtn.disabled = false;
+  spreadBtn.disabled = false;
+  document.getElementById('tableHint').textContent = 'Đã trộn xong! Nhấn "Rút Card" để chọn thẻ.';
 }
 
 /* ============================================================
@@ -741,20 +779,33 @@ function spreadCards(){
   pickedIndexes = new Set();
 
   const deckStack = document.getElementById('deckStack');
-  const grid = document.getElementById('spreadGrid');
+  const fan = document.getElementById('spreadGrid');
   const hint = document.getElementById('tableHint');
 
   deckStack.style.display = 'none';
-  grid.hidden = false;
-  grid.innerHTML = '';
+  fan.hidden = false;
+  fan.innerHTML = '';
   hint.textContent = `Đã trải ${drawPool.length} thẻ — chọn một lá bất kỳ…`;
 
+  const n = drawPool.length;
+  const isMobile = window.innerWidth <= 560;
+  const totalArc = Math.min(isMobile ? 170 : 230, Math.max(30, n * 5.4));
+  const angleStep = n > 1 ? totalArc / (n - 1) : 0;
+  const startAngle = -totalArc / 2;
+  const radius = Math.round((isMobile ? 190 : 300) + Math.min(n, 30) * (isMobile ? 1.4 : 2.4));
+  const fanHeight = Math.round(radius * Math.cos((totalArc / 2) * Math.PI / 180) + 210);
+  fan.style.setProperty('--fan-height', fanHeight + 'px');
+
   drawPool.forEach((card, i) => {
+    const angle = n > 1 ? startAngle + i * angleStep : 0;
+
     const slot = document.createElement('div');
     slot.className = 'spread-slot';
     slot.dataset.index = i;
-    slot.style.setProperty('--tilt', ((Math.random() - 0.5) * 6).toFixed(1) + 'deg');
-    slot.style.animationDelay = (i * 0.035) + 's';
+    slot.style.zIndex = i;
+    // trạng thái xuất phát: xếp gọn tại vị trí bộ bài, chưa xoè
+    slot.style.transform = 'rotate(0deg) translateY(0px) scale(0.5)';
+    slot.style.opacity = '0';
 
     const face = document.createElement('div');
     face.className = 'card-back-face';
@@ -765,7 +816,14 @@ function spreadCards(){
     slot.appendChild(face);
 
     slot.addEventListener('click', () => pickCard(i));
-    grid.appendChild(slot);
+    fan.appendChild(slot);
+
+    // bay ra & xoè thành hình quạt, so le theo thứ tự lá bài
+    const delay = Math.min(i * 16, 620);
+    setTimeout(() => {
+      slot.style.transform = `rotate(${angle.toFixed(2)}deg) translateY(-${radius}px) scale(1)`;
+      slot.style.opacity = '1';
+    }, delay);
   });
 }
 
@@ -970,7 +1028,7 @@ document.getElementById('againBtn').addEventListener('click', () => {
   closeReveal();
   const remaining = drawPool.map((_, i) => i).filter(i => !pickedIndexes.has(i));
   if(remaining.length === 0){
-    document.getElementById('tableHint').textContent = 'Đã rút hết các thẻ đã trải. Nhấn "Trải Bài" để tiếp tục.';
+    document.getElementById('tableHint').textContent = 'Đã rút hết các thẻ đã trải. Nhấn "Rút Card" để tiếp tục.';
   } else {
     document.getElementById('tableHint').textContent = `Còn ${remaining.length} thẻ trên bàn — chọn tiếp một lá khác.`;
   }
@@ -986,7 +1044,7 @@ function ensureAudioCtx(){
 document.getElementById('soundToggle').addEventListener('click', function(){
   soundEnabled = !soundEnabled;
   this.setAttribute('aria-pressed', String(soundEnabled));
-  this.textContent = soundEnabled ? '🔊' : '🔇';
+  this.textContent = soundEnabled ? 'Tắt Âm' : 'Bật Âm';
   this.title = soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh';
   if(soundEnabled) ensureAudioCtx();
 });
