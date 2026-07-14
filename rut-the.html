@@ -140,13 +140,16 @@
   }
   .label .num{
     order:1;
-    display:inline-block;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
     max-width: min(60vw, 420px);
     font-family:'Anton', 'Big Shoulders Display', sans-serif;
     font-size:11px;
+    line-height:1;
     color:var(--void);
     background: linear-gradient(135deg, var(--gold), var(--flame));
-    padding:3px 9px;
+    padding:5px 9px 4px;
     border-radius:3px;
     letter-spacing:0.05em;
     text-transform:uppercase;
@@ -160,7 +163,7 @@
     margin-top:0;
     font-family:'Anton', 'Big Shoulders Display', 'Playfair Display', sans-serif;
     font-weight:400;
-    font-size:15px;
+    font-size:19px;
     color: var(--label-text, var(--text-light));
     letter-spacing:0.02em;
     text-transform:uppercase;
@@ -1199,7 +1202,8 @@ function sampleLuminanceForElement(ctx, cw, ch, ratio, imgNaturalW, imgNaturalH,
 function recomputeTheme(){
   if(!cachedThemeImg) return;
   const img = cachedThemeImg;
-  const backEl = document.querySelectorAll('.top-bar .back-btn')[0];
+  // Nút "Trang chủ" giữ cố định kiểu viền vàng (giống nút "Rút Thẻ Khác" bên dưới),
+  // không đổi màu theo nền nữa để tránh bị chìm vào ảnh.
   const labelEl = labelBox;
   try{
     const maxDim = 320;
@@ -1211,18 +1215,12 @@ function recomputeTheme(){
     const ctx = canvas.getContext('2d');
     ctx.drawImage(img, 0, 0, cw, ch);
 
-    const backLum = sampleLuminanceForElement(ctx, cw, ch, ratio, img.naturalWidth, img.naturalHeight, backEl);
     const labelLum = sampleLuminanceForElement(ctx, cw, ch, ratio, img.naturalWidth, img.naturalHeight, labelEl);
-
-    const backDark = shouldUseDarkText(backLum);
-    backEl.classList.toggle('is-light', backDark);
-    backEl.classList.toggle('is-dark', !backDark);
 
     const labelDark = shouldUseDarkText(labelLum);
     labelEl.classList.toggle('is-light', labelDark);
     labelEl.classList.toggle('is-dark', !labelDark);
   }catch(err){
-    backEl.classList.add('is-dark');
     labelEl.classList.add('is-dark');
   }
 }
