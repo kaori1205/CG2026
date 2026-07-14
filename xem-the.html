@@ -20,6 +20,7 @@
     --card-w: clamp(220px, 58vw, 400px);
     --card-ratio: 1635 / 2048;
     --radius: 4mm;
+    --card-depth: 10px;
   }
 
   *{box-sizing:border-box;}
@@ -195,7 +196,7 @@
     left:6%; right:6%;
     bottom:-9%;
     height:16%;
-    background: radial-gradient(ellipse, rgba(0,0,0,0.6), transparent 72%);
+    background: radial-gradient(ellipse, rgba(0,0,0,0.72), transparent 72%);
     filter: blur(16px);
     transform: translateZ(-40px);
     pointer-events:none;
@@ -208,10 +209,12 @@
     overflow:hidden;
     background: var(--iron);
     padding:4px;
+    transform: translateZ(calc(var(--card-depth) / 2));
     box-shadow:
-      0 0 0 1.5px rgba(244,211,94,0.55),
-      0 0 40px rgba(232,56,13,0.4),
-      0 20px 40px -14px rgba(0,0,0,0.8),
+      0 0 0 2px rgba(244,211,94,0.8),
+      0 0 0 3.5px rgba(10,5,3,0.55),
+      0 0 44px rgba(232,56,13,0.4),
+      0 22px 44px -14px rgba(0,0,0,0.85),
       inset 0 1px 0 rgba(255,255,255,0.5),
       inset 0 -2px 3px rgba(0,0,0,0.35),
       inset 2px 0 3px rgba(255,255,255,0.15),
@@ -283,15 +286,60 @@
     pointer-events:none;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
-  /* Cạnh/độ dày thẻ: một lớp lùi ra sau theo trục Z, tối hơn, lộ ra khi thẻ nghiêng
-     -> tạo cảm giác thẻ là vật thể có độ dày thật chứ không phải ảnh phẳng dán trên kính */
-  .card-edge{
+  /* Cạnh/độ dày thẻ: dựng đúng hình học 3D (4 dải vuông góc nối mặt trước và mặt sau)
+     thay vì 1 lớp phẳng nằm song song phía sau -> lớp cũ đó KHÔNG BAO GIỜ lộ ra được
+     vì luôn bị mặt trước che kín ở mọi góc xoay. Dải cạnh vuông góc thật thì mới lộ ra khi nghiêng. */
+  .card-back{
     position:absolute; inset:0;
     border-radius: var(--radius);
     background-image:
       linear-gradient(135deg, #f4ecd6 0%, #c9ccd0 18%, #8a8f96 32%, #f4ecd6 48%, #b8862f 60%, #8a8f96 78%, #d7dbe0 100%);
-    filter: brightness(0.5) saturate(0.9);
-    transform: translateZ(-6px);
+    filter: brightness(0.45) saturate(0.9);
+    transform: translateZ(calc(var(--card-depth) / -2));
+    pointer-events:none;
+  }
+  .card-side{
+    position:absolute;
+    background-image: linear-gradient(90deg, #d7dbe0 0%, #8a8f96 35%, #f4ecd6 55%, #8a8f96 80%, #d7dbe0 100%);
+    filter: brightness(0.5);
+    pointer-events:none;
+  }
+  .side-right, .side-left{
+    top:0; width: var(--card-depth); height:100%;
+  }
+  .side-top, .side-bottom{
+    left:0; height: var(--card-depth); width:100%;
+  }
+  .side-right{
+    left: calc(100% - var(--card-depth) / 2);
+    transform: rotateY(90deg) translateZ(calc(var(--card-depth) / 2));
+  }
+  .side-left{
+    left: calc(var(--card-depth) / -2);
+    transform: rotateY(-90deg) translateZ(calc(var(--card-depth) / 2));
+  }
+  .side-top{
+    top: calc(var(--card-depth) / -2);
+    transform: rotateX(-90deg) translateZ(calc(var(--card-depth) / 2));
+  }
+  .side-bottom{
+    top: calc(100% - var(--card-depth) / 2);
+    transform: rotateX(90deg) translateZ(calc(var(--card-depth) / 2));
+  }
+  /* Vệt sáng foil quét chéo qua bề mặt -> đây là yếu tố quan trọng nhất để trông "thật"
+     vì nó phản ứng rõ ràng với ánh sáng/góc nhìn, không bị chìm vào ảnh nền sáng như holo tròn */
+  .shine-sweep{
+    position:absolute; inset:4px;
+    border-radius: calc(var(--radius) - 1px);
+    background: linear-gradient(75deg,
+      transparent 32%,
+      rgba(255,255,255,0.5) 46%,
+      rgba(255,255,255,0.9) 50%,
+      rgba(255,255,255,0.5) 54%,
+      transparent 68%);
+    background-size:240% 240%;
+    mix-blend-mode: overlay;
+    opacity:0.6;
     pointer-events:none;
   }
 
@@ -334,10 +382,15 @@
     <div class="card-wrap">
       <div class="card-inner" id="cardInner">
         <div class="card-shadow"></div>
-        <div class="card-edge"></div>
+        <div class="card-back"></div>
+        <div class="card-side side-top"></div>
+        <div class="card-side side-bottom"></div>
+        <div class="card-side side-left"></div>
+        <div class="card-side side-right"></div>
         <div class="card-face">
           <div class="card-art"><div class="art" id="cardArt"></div></div>
         </div>
+        <div class="shine-sweep" id="shineSweep"></div>
         <div class="holo-sheen" id="holoSheen"></div>
         <div class="holo-glare" id="holoGlare"></div>
         <div class="holo-edge" id="holoEdge"></div>
@@ -517,6 +570,7 @@
   const holoSheen = document.getElementById('holoSheen');
   const holoGlare = document.getElementById('holoGlare');
   const holoEdge = document.getElementById('holoEdge');
+  const shineSweep = document.getElementById('shineSweep');
   const cardShadowEl = document.querySelector('.card-shadow');
 
   let targetRX = 0, targetRY = 0, curRX = 0, curRY = 0;
@@ -537,8 +591,8 @@
     let dy = (e.clientY - cy) / (rect.height / 2);
     dx = Math.max(-1, Math.min(1, dx));
     dy = Math.max(-1, Math.min(1, dy));
-    targetRY = dx * 20;
-    targetRX = dy * -16; // di chuột lên -> mép trên ngả ra xa (nghiêng thật theo cả 2 trục)
+    targetRY = dx * 24;
+    targetRX = dy * -19; // di chuột lên -> mép trên ngả ra xa (nghiêng thật theo cả 2 trục)
     targetPX = 50 + dx * 42;
     targetPY = 50 + dy * 42;
     targetGlow = 0.6;
@@ -563,8 +617,8 @@
       jitterY += (Math.random() - 0.5) * 0.5;
       jitterX *= 0.94; // damping: kéo dần jitter về 0 để không trôi dạt
       jitterY *= 0.94;
-      targetRY = Math.sin(idleT) * 9 + jitterX;
-      targetRX = Math.cos(idleT * 0.7) * 4 + jitterY;
+      targetRY = Math.sin(idleT) * 13 + jitterX;
+      targetRX = Math.cos(idleT * 0.7) * 6 + jitterY;
       targetPX = 50 + Math.sin(idleT) * 20;
       targetPY = 50 + Math.cos(idleT * 0.8) * 20;
       targetGlow = 0.22 + Math.sin(idleT * 1.3) * 0.1;
@@ -581,6 +635,7 @@
     cardInner.style.transform = `scale(${curScale}) rotateX(${curRX}deg) rotateY(${curRY}deg)`;
     cardShadowEl.style.transform = `translateZ(-40px) translateX(${curRY * -1.6}px) translateY(${curRX * 1.2}px) scale(${1 - Math.abs(curRY) * 0.006}, ${1 - Math.abs(curRX) * 0.006})`;
     holoSheen.style.backgroundPosition = `${curPX}% ${curPY}%, ${100 - curPX}% ${100 - curPY}%`;
+    shineSweep.style.backgroundPosition = `${curPX}% ${curPY}%`;
     holoGlare.style.setProperty('--gx', curPX + '%');
     holoGlare.style.setProperty('--gy', curPY + '%');
     holoGlare.style.opacity = curGlow;
