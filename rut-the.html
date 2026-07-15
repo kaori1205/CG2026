@@ -794,6 +794,15 @@
     z-index:5;
     animation: hintFade 5s ease forwards;
     pointer-events:none;
+    padding:0 16px;
+  }
+  /* Trên màn hình hẹp, nút "Rút Thẻ Khác" nằm cùng hàng dưới cùng bên trái
+     và đủ rộng để đè lên chữ hint căn giữa -> đẩy hint lên hẳn một hàng
+     phía trên nút để 2 phần không còn chồng lên nhau. */
+  @media (max-width:560px){
+    body.phase-reveal .hint{
+      bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px));
+    }
   }
   @keyframes hintFade{ 0%{opacity:0;} 15%{opacity:1;} 75%{opacity:1;} 100%{opacity:0;} }
 
@@ -838,7 +847,7 @@
   .icon-btn[aria-pressed="true"]{ color: var(--flame); border-color: var(--flame); background: rgba(232,56,13,0.22); }
 
   @media (max-width:560px){
-    .label{ display:none; }
+    body:not(.phase-reveal) .label{ display:none; }
     .header{ top: max(66px, calc(env(safe-area-inset-top) + 66px)); }
   }
 </style>
@@ -1387,7 +1396,7 @@ function showReveal(card){
   if(convergeTimeoutId){ clearTimeout(convergeTimeoutId); convergeTimeoutId = null; }
   stage.classList.add('awaiting-flip');
   document.body.classList.add('awaiting-flip');
-  if(hintText){ hintText.textContent = 'Chạm vào thẻ để đốt lộ mặt trước'; replayAnim(hintText); }
+  if(hintText){ hintText.textContent = 'Chạm vào thẻ để lộ mặt trước'; replayAnim(hintText); }
 
   document.body.classList.add('phase-reveal');
 
