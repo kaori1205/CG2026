@@ -493,40 +493,6 @@
     100%{ opacity:0; transform:scale(0.3); }
   }
 
-  /* ---------- Thanh hành động: âm thanh / lưu ảnh / chia sẻ ---------- */
-  .action-bar{
-    position:fixed;
-    right:20px;
-    bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px));
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-    z-index:10;
-  }
-  .icon-btn{
-    width:42px; height:42px;
-    border-radius:50%;
-    display:flex; align-items:center; justify-content:center;
-    background: rgba(10,5,3,0.45);
-    backdrop-filter: blur(6px);
-    border:1px solid rgba(244,211,94,0.4);
-    color: var(--gold);
-    font-size:17px;
-    line-height:1;
-    cursor:pointer;
-    transition: all 0.25s ease;
-  }
-  .icon-btn:hover{
-    background: rgba(232,56,13,0.18);
-    border-color: var(--flame);
-    color: var(--flame);
-  }
-  .icon-btn[aria-pressed="true"]{
-    color: var(--flame);
-    border-color: var(--flame);
-    background: rgba(232,56,13,0.22);
-  }
-
   @media (max-width:560px){
     .label{ display:none; }
   }
@@ -581,10 +547,6 @@
   </div>
 
   <div class="hint">Di chuột hoặc chạm để xoay thẻ</div>
-
-  <div class="action-bar">
-    <button class="icon-btn" id="soundToggle" title="Bật âm thanh" aria-pressed="false">🔇</button>
-  </div>
 
 <script>
   const params = new URLSearchParams(location.search);
@@ -749,16 +711,6 @@
     }
   });
 
-  // ---------- Nút bật/tắt âm thanh ----------
-  const soundToggle = document.getElementById('soundToggle');
-  soundToggle.addEventListener('click', () => {
-    soundEnabled = !soundEnabled;
-    soundToggle.setAttribute('aria-pressed', String(soundEnabled));
-    soundToggle.textContent = soundEnabled ? '🔊' : '🔇';
-    soundToggle.title = soundEnabled ? 'Tắt âm thanh' : 'Bật âm thanh';
-    if(soundEnabled) ensureAudioCtx();
-  });
-
   // ---------- Hiệu ứng nghiêng / xoay / hologram ----------
   const stage = document.getElementById('stage');
   const cardInner = document.getElementById('cardInner');
@@ -767,37 +719,6 @@
   const holoEdge = document.getElementById('holoEdge');
   const shineSweep = document.getElementById('shineSweep');
   const sparkleLayer = document.getElementById('sparkleLayer');
-
-  // ---------- Âm thanh nhẹ khi tương tác (mặc định tắt, người dùng tự bật) ----------
-  let audioCtx = null;
-  let soundEnabled = false;
-  let lastChimeTime = 0;
-
-  function ensureAudioCtx(){
-    if(!audioCtx){
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    return audioCtx;
-  }
-
-  function playChime(){
-    if(!soundEnabled) return;
-    const now = performance.now();
-    if(now - lastChimeTime < 900) return; // chống phát liên tục dồn dập
-    lastChimeTime = now;
-    const ctx = ensureAudioCtx();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(1200, ctx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(2000, ctx.currentTime + 0.12);
-    gain.gain.setValueAtTime(0, ctx.currentTime);
-    gain.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.02);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
-    osc.connect(gain).connect(ctx.destination);
-    osc.start();
-    osc.stop(ctx.currentTime + 0.5);
-  }
 
   // ---------- Hạt sáng lấp lánh ngẫu nhiên khi nghiêng mạnh ----------
   function spawnSparkle(){
@@ -808,7 +729,6 @@
     el.style.animationDuration = (650 + Math.random() * 500) + 'ms';
     sparkleLayer.appendChild(el);
     el.addEventListener('animationend', () => el.remove());
-    playChime();
   }
   const cardShadowEl = document.querySelector('.card-shadow');
 
