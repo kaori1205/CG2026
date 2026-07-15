@@ -617,6 +617,56 @@
     pointer-events:none;
     background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='120' height='120'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>");
   }
+
+  /* ---------- Hiệu ứng "Warm Glow Pulse": viền thẻ phát sáng cam-vàng,
+     mờ dần - sáng dần theo nhịp đều (không cần nhìn kỹ mới thấy, khác hẳn
+     vệt chạy quanh viền khó nhận ra trước đây) — giống thẻ đang âm ỉ toả
+     nhiệt. Dùng box-shadow lan ra ngoài mép thẻ, animate opacity/blur. */
+  .glow-pulse{
+    position:absolute; inset:-2%;
+    border-radius: var(--radius);
+    transform: translateZ(calc(var(--card-depth) / 2 - 2px));
+    pointer-events:none;
+    opacity:0;
+    box-shadow:
+      0 0 22px 6px rgba(255,154,30,0.55),
+      0 0 46px 14px rgba(232,56,13,0.35);
+    transition: opacity 0.6s ease;
+  }
+  .glow-pulse.active{
+    opacity:1;
+    animation: glowPulseBreathe 3.4s ease-in-out infinite;
+  }
+  @keyframes glowPulseBreathe{
+    0%, 100%{ box-shadow: 0 0 18px 4px rgba(255,154,30,0.4), 0 0 38px 10px rgba(232,56,13,0.24); }
+    50%{ box-shadow: 0 0 30px 9px rgba(255,180,60,0.75), 0 0 60px 20px rgba(232,56,13,0.48); }
+  }
+
+
+  /* ---------- Hiệu ứng "Ember Rain": vài tàn lửa nhỏ lơ lửng bay lên
+     nhẹ nhàng, liên tục, tần suất thấp trong suốt lúc xem thẻ (khác hẳn
+     việc bùng 1 đợt rồi tắt) — tạo không khí ấm áp, sang trọng. */
+  .ember-rain-layer{
+    position:absolute; inset:-6%;
+    overflow:visible;
+    border-radius: var(--radius);
+    transform: translateZ(calc(var(--card-depth) / 2 + 9.5px));
+    pointer-events:none;
+  }
+  .ember-drop{
+    position:absolute; width:4px; height:4px; margin:-2px 0 0 -2px;
+    border-radius:50%;
+    background: radial-gradient(circle, #fff8e6 0%, var(--gold) 50%, var(--flame) 80%, transparent 100%);
+    box-shadow: 0 0 6px 1px rgba(255,154,30,0.7);
+    opacity:0;
+    animation: emberDrift var(--drop-dur, 3200ms) ease-in forwards;
+  }
+  @keyframes emberDrift{
+    0%{ opacity:0; transform: translate(0,0) scale(0.7); }
+    10%{ opacity:0.9; }
+    75%{ opacity:0.7; }
+    100%{ opacity:0; transform: translate(var(--dx,0px), var(--dy,-90px)) scale(0.3); }
+  }
   .card-back{
     position:absolute; inset:0;
     border-radius: var(--radius);
@@ -806,26 +856,6 @@
   }
   @keyframes hintFade{ 0%{opacity:0;} 15%{opacity:1;} 75%{opacity:1;} 100%{opacity:0;} }
 
-  .sparkle-layer{
-    position:absolute; inset:0;
-    border-radius: calc(var(--radius) - 1px);
-    overflow:hidden;
-    pointer-events:none;
-    transform: translateZ(calc(var(--card-depth) / 2 + 3px));
-  }
-  .sparkle{
-    position:absolute; width:6px; height:6px; margin:-3px 0 0 -3px;
-    background: radial-gradient(circle, #fff 0%, rgba(255,255,255,0.7) 45%, transparent 72%);
-    border-radius:50%;
-    opacity:0;
-    animation: sparklePop 850ms ease-out forwards;
-  }
-  @keyframes sparklePop{
-    0%{ opacity:0; transform:scale(0.2); }
-    30%{ opacity:1; transform:scale(1.4); }
-    100%{ opacity:0; transform:scale(0.3); }
-  }
-
   .action-bar{
     position:fixed; right:20px;
     bottom: max(78px, calc(env(safe-area-inset-bottom) + 78px));
@@ -909,12 +939,13 @@
           <div class="holo-glare" id="holoGlare"></div>
           <div class="holo-edge" id="holoEdge"></div>
           <div class="card-grain"></div>
+          <div class="glow-pulse" id="glowPulse"></div>
           <div class="burn-char" id="burnChar"></div>
           <div class="burn-char" id="burnChar"></div>
           <div class="burn-curl" id="burnCurl"></div>
           <div class="burn-flame" id="burnFlame"></div>
           <div class="burn-ember-layer" id="burnEmberLayer"></div>
-          <div class="sparkle-layer" id="sparkleLayer"></div>
+          <div class="ember-rain-layer" id="emberRainLayer"></div>
         </div>
         <div class="reveal-flash" id="revealFlash">
           <span class="ember" style="left:28%; animation-delay:0.05s; --drift:-14px;"></span>
@@ -1332,6 +1363,8 @@ redrawBtn.addEventListener('click', () => {
   document.body.classList.remove('phase-reveal');
   document.body.classList.remove('awaiting-flip');
   drawBtn.disabled = false;
+  stopEmberRain();
+  glowPulseEl.classList.remove('active');
 
   shuffleEls.forEach((el) => {
     el.style.opacity = '1';
@@ -1360,6 +1393,8 @@ const burnCurlEl = document.getElementById('burnCurl');
 const burnEmberLayer = document.getElementById('burnEmberLayer');
 const emberConvergeLayer = document.getElementById('emberConvergeLayer');
 const igniteFlashEl = document.getElementById('igniteFlash');
+const glowPulseEl = document.getElementById('glowPulse');
+const emberRainLayerEl = document.getElementById('emberRainLayer');
 let pendingRevealCard = null;
 
 function showReveal(card){
@@ -1393,10 +1428,12 @@ function showReveal(card){
   burnEmberLayer.innerHTML = '';
   emberConvergeLayer.innerHTML = '';
   igniteFlashEl.classList.remove('active');
+  glowPulseEl.classList.remove('active');
+  stopEmberRain();
   if(convergeTimeoutId){ clearTimeout(convergeTimeoutId); convergeTimeoutId = null; }
   stage.classList.add('awaiting-flip');
   document.body.classList.add('awaiting-flip');
-  if(hintText){ hintText.textContent = 'Chạm vào thẻ để lộ mặt trước'; replayAnim(hintText); }
+  if(hintText){ hintText.textContent = 'Chạm vào thẻ để đốt lộ mặt trước'; replayAnim(hintText); }
 
   document.body.classList.add('phase-reveal');
 
@@ -1455,6 +1492,39 @@ function spawnConvergeSpark(sx, sy, tx, ty, delay, duration, big){
     el.style.transform = 'scale(0.3)';
   });
   setTimeout(() => el.remove(), delay + duration + 80);
+}
+
+// Mưa tàn lửa: nhiều hạt lửa nhỏ lơ lửng bay lên liên tục khắp mặt thẻ,
+// trong suốt lúc xem thẻ (bắt đầu ngay khi mặt trước lộ ra, dừng khi rút
+// thẻ khác).
+let emberRainIntervalId = null;
+
+function spawnEmberDrop(){
+  const el = document.createElement('div');
+  el.className = 'ember-drop';
+  el.style.left = rand(4, 96) + '%';
+  el.style.top = rand(20, 98) + '%';
+  const dur = rand(2000, 3400);
+  el.style.setProperty('--drop-dur', dur + 'ms');
+  el.style.setProperty('--dx', rand(-26, 26).toFixed(0) + 'px');
+  el.style.setProperty('--dy', rand(-80, -130).toFixed(0) + 'px');
+  emberRainLayerEl.appendChild(el);
+  el.addEventListener('animationend', () => el.remove());
+}
+
+function startEmberRain(){
+  stopEmberRain();
+  spawnEmberDrop(); spawnEmberDrop(); spawnEmberDrop();
+  emberRainIntervalId = setInterval(() => {
+    spawnEmberDrop();
+    if(Math.random() < 0.7) spawnEmberDrop();
+    if(Math.random() < 0.3) spawnEmberDrop();
+  }, 240);
+}
+
+function stopEmberRain(){
+  if(emberRainIntervalId){ clearInterval(emberRainIntervalId); emberRainIntervalId = null; }
+  emberRainLayerEl.innerHTML = '';
 }
 
 // Bắn ra 1 đợt tàn lửa hội tụ từ quanh màn hình vào (tx, ty) — trả về
@@ -1641,6 +1711,10 @@ function igniteAndBurn(ox, oy, targetX, targetY, W, H){
       burnFlameEl.style.background = '';
       burnCharEl.classList.remove('active');
       burnCurlEl.classList.remove('active');
+      // Đúng khoảnh khắc mặt trước lộ hẳn ra: bật viền sáng "thở" đều
+      // và bắt đầu mưa tàn lửa nhẹ.
+      glowPulseEl.classList.add('active');
+      startEmberRain();
     }
   }
   burnAnimId = requestAnimationFrame(frame);
@@ -1731,18 +1805,7 @@ const holoSheen = document.getElementById('holoSheen');
 const holoGlare = document.getElementById('holoGlare');
 const holoEdge = document.getElementById('holoEdge');
 const shineSweep = document.getElementById('shineSweep');
-const sparkleLayer = document.getElementById('sparkleLayer');
 const cardShadowEl = document.querySelector('.card-shadow');
-
-function spawnSparkle(){
-  const el = document.createElement('div');
-  el.className = 'sparkle';
-  el.style.left = (8 + Math.random() * 84) + '%';
-  el.style.top = (8 + Math.random() * 84) + '%';
-  el.style.animationDuration = (650 + Math.random() * 500) + 'ms';
-  sparkleLayer.appendChild(el);
-  el.addEventListener('animationend', () => el.remove());
-}
 
 let targetRX = 0, targetRY = 0, curRX = 0, curRY = 0;
 let targetPX = 50, targetPY = 50, curPX = 50, curPY = 50;
@@ -1812,9 +1875,6 @@ function loop(){
   holoSheen.style.backgroundPosition = `${curPX}% ${curPY}%, ${100 - curPX}% ${100 - curPY}%`;
   shineSweep.style.backgroundPosition = `${curPX}% ${curPY}%`;
 
-  if(document.body.classList.contains('phase-reveal') && curGlow > 0.42 && Math.random() < curGlow * 0.05){
-    spawnSparkle();
-  }
   holoGlare.style.setProperty('--gx', curPX + '%');
   holoGlare.style.setProperty('--gy', curPY + '%');
   holoGlare.style.opacity = curGlow;
