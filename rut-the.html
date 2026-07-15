@@ -30,7 +30,7 @@
     --radius: 4mm;
     --card-depth: 10px;
     /* Ảnh mặt sau thẻ — thay đường dẫn này bằng ảnh mặt sau của bạn */
-    --back-card-img: url('images/mat-sau.webp');
+    --back-card-img: url('images/mat-sau.png');
   }
 
   *{box-sizing:border-box;}
@@ -653,6 +653,49 @@
     background-color: var(--iron);
   }
   /* Lớp lửa cháy lan (dải sáng cam-đỏ bám theo đúng mép đang đốt) */
+  /* Vết than cháy — KHÔNG biến mất, nằm sát mép trong của vùng đã cháy qua,
+     mô phỏng viền giấy hoá than: đen nhám, hơi nâu cháy, có vệt xém loang lổ
+     đậm nhạt (không phải màu đen phẳng) và mép răng cưa nhọn (giấy cháy xé,
+     không cong tròn mượt). Đây là lớp "vết tích để lại", khác với .burn-flame
+     là dải sáng đang di chuyển. */
+  .burn-char{
+    position:absolute; inset:0;
+    border-radius: var(--radius);
+    overflow:hidden;
+    transform: translateZ(calc(var(--card-depth) / 2 + 7px));
+    pointer-events:none;
+    opacity:0;
+    background:
+      radial-gradient(ellipse at 28% 22%, rgba(80,38,16,0.55), transparent 50%),
+      radial-gradient(ellipse at 72% 78%, rgba(56,24,10,0.5), transparent 48%),
+      radial-gradient(ellipse at 50% 50%, rgba(40,18,8,0.4), transparent 60%),
+      #0c0603;
+    background-image:
+      url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='c'><feTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='3' stitchTiles='stitch'/><feColorMatrix type='matrix' values='0 0 0 0 0.25  0 0 0 0 0.12  0 0 0 0 0.04  0 0 0 0.5 0'/></filter><rect width='100%25' height='100%25' filter='url(%23c)'/></svg>"),
+      radial-gradient(ellipse at 28% 22%, rgba(80,38,16,0.55), transparent 50%),
+      radial-gradient(ellipse at 72% 78%, rgba(56,24,10,0.5), transparent 48%),
+      radial-gradient(ellipse at 50% 50%, rgba(40,18,8,0.4), transparent 60%),
+      #0c0603;
+    background-blend-mode: overlay, normal, normal, normal, normal;
+    transition: opacity 0.2s ease;
+  }
+  .burn-char.active{ opacity:1; }
+  /* Viền mép quăn: 1 dải tối hẹp bám sát ngay trong mép lửa, tạo cảm
+     giác giấy hơi cong vênh lên và đổ bóng xuống phần than bên dưới,
+     thay vì mép cháy là 1 lát cắt phẳng lì. */
+  .burn-curl{
+    position:absolute; inset:0;
+    border-radius: var(--radius);
+    overflow:hidden;
+    transform: translateZ(calc(var(--card-depth) / 2 + 7.5px));
+    pointer-events:none;
+    opacity:0;
+    mix-blend-mode: multiply;
+    background: rgba(0,0,0,0.55);
+    filter: blur(1.5px);
+    transition: opacity 0.2s ease;
+  }
+  .burn-curl.active{ opacity:1; }
   .burn-flame{
     position:absolute; inset:0;
     border-radius: var(--radius);
@@ -661,7 +704,7 @@
     pointer-events:none;
     mix-blend-mode: screen;
     opacity:0;
-    filter: blur(2.5px);
+    filter: blur(0.6px);
     transition: opacity 0.25s ease;
   }
   .burn-flame.active{ opacity:1; }
@@ -680,6 +723,47 @@
     pointer-events:none;
   }
   .card-side{ position:absolute; background-image: linear-gradient(90deg, #d7dbe0 0%, #8a8f96 35%, #f4ecd6 55%, #8a8f96 80%, #d7dbe0 100%); filter: brightness(0.5); pointer-events:none; }
+  /* ---------- Tàn lửa bay tụ vào 1 điểm trên thẻ trước khi bén lửa ----------
+     Đặt trực tiếp trên toàn màn hình (position:fixed, không nằm trong khối
+     3D của thẻ) để tàn lửa có thể bay từ ngoài rìa màn hình hội tụ vào,
+     tạo nhịp "chờ đợi - dồn lại - bùng cháy" thay vì lửa bắt đầu ngay tức
+     khắc như trước. */
+  .ember-converge-layer{
+    position:fixed; inset:0;
+    z-index:8;
+    pointer-events:none;
+  }
+  .spark-converge{
+    position:fixed;
+    width:4px; height:4px;
+    margin:-2px 0 0 -2px;
+    border-radius:50%;
+    background: radial-gradient(circle, #fff6dd 0%, var(--gold) 45%, var(--flame) 75%, transparent 100%);
+    box-shadow: 0 0 7px 2px rgba(255,154,30,0.75), 0 0 14px 4px rgba(232,56,13,0.35);
+    opacity:0;
+    transition: opacity 0.15s ease;
+    pointer-events:none;
+  }
+  .spark-converge.big{ width:6px; height:6px; margin:-3px 0 0 -3px; box-shadow: 0 0 10px 3px rgba(255,154,30,0.85), 0 0 20px 6px rgba(232,56,13,0.4); }
+  .spark-converge.visible{ opacity:1; }
+  /* Điểm loé sáng bùng lên đúng lúc tàn lửa hội tụ đủ và bén thành lửa —
+     đánh dấu khoảnh khắc chuyển từ "chờ đợi" sang "bùng cháy". */
+  .ignite-flash{
+    position:fixed;
+    width:14px; height:14px;
+    margin:-7px 0 0 -7px;
+    border-radius:50%;
+    background: radial-gradient(circle, #fff8e6 0%, #ffe19a 30%, #ff9a3d 55%, #e8380d 74%, transparent 82%);
+    opacity:0;
+    pointer-events:none;
+    z-index:9;
+  }
+  @keyframes igniteFlashPop{
+    0%{ opacity:0; transform:scale(0.15); }
+    22%{ opacity:1; transform:scale(3.6); }
+    100%{ opacity:0; transform:scale(11); }
+  }
+  .ignite-flash.active{ animation: igniteFlashPop 0.55s cubic-bezier(.2,.8,.3,1) both; }
   .side-right, .side-left{ top:0; width: var(--card-depth); height:100%; }
   .side-top, .side-bottom{ left:0; height: var(--card-depth); width:100%; }
   .side-right{ left: calc(100% - var(--card-depth) / 2); transform: rotateY(90deg) translateZ(calc(var(--card-depth) / 2)); }
@@ -798,6 +882,8 @@
     <div class="reveal-burst" id="revealBurst"></div>
 
     <div class="stage" id="stage">
+      <div class="ember-converge-layer" id="emberConvergeLayer"></div>
+      <div class="ignite-flash" id="igniteFlash"></div>
       <div class="card-wrap" id="cardWrap">
         <div class="card-inner" id="cardInner">
           <div class="card-shadow"></div>
@@ -814,6 +900,9 @@
           <div class="holo-glare" id="holoGlare"></div>
           <div class="holo-edge" id="holoEdge"></div>
           <div class="card-grain"></div>
+          <div class="burn-char" id="burnChar"></div>
+          <div class="burn-char" id="burnChar"></div>
+          <div class="burn-curl" id="burnCurl"></div>
           <div class="burn-flame" id="burnFlame"></div>
           <div class="burn-ember-layer" id="burnEmberLayer"></div>
           <div class="sparkle-layer" id="sparkleLayer"></div>
@@ -1257,7 +1346,11 @@ const labelTitle = document.getElementById('labelTitle');
 const hintText = document.getElementById('hintText');
 const cardBackEl = document.getElementById('cardBack');
 const burnFlameEl = document.getElementById('burnFlame');
+const burnCharEl = document.getElementById('burnChar');
+const burnCurlEl = document.getElementById('burnCurl');
 const burnEmberLayer = document.getElementById('burnEmberLayer');
+const emberConvergeLayer = document.getElementById('emberConvergeLayer');
+const igniteFlashEl = document.getElementById('igniteFlash');
 let pendingRevealCard = null;
 
 function showReveal(card){
@@ -1284,7 +1377,14 @@ function showReveal(card){
   burnFlameEl.classList.remove('active');
   burnFlameEl.style.clipPath = '';
   burnFlameEl.style.background = '';
+  burnCharEl.classList.remove('active');
+  burnCharEl.style.clipPath = '';
+  burnCurlEl.classList.remove('active');
+  burnCurlEl.style.clipPath = '';
   burnEmberLayer.innerHTML = '';
+  emberConvergeLayer.innerHTML = '';
+  igniteFlashEl.classList.remove('active');
+  if(convergeTimeoutId){ clearTimeout(convergeTimeoutId); convergeTimeoutId = null; }
   stage.classList.add('awaiting-flip');
   document.body.classList.add('awaiting-flip');
   if(hintText){ hintText.textContent = 'Chạm vào thẻ để đốt lộ mặt trước'; replayAnim(hintText); }
@@ -1310,6 +1410,7 @@ function showReveal(card){
    thành các "vòng" giả như cách dùng gradient trước đó.
    ================================================================== */
 let burnAnimId = null;
+let convergeTimeoutId = null;
 
 function spawnBurnEmber(xPct, yPct){
   const el = document.createElement('div');
@@ -1322,20 +1423,96 @@ function spawnBurnEmber(xPct, yPct){
   el.addEventListener('animationend', () => el.remove());
 }
 
-// 4 góc có thể bén lửa, kèm dấu (sx, sy) để cung phần tư quét đúng hướng
-// đi VÀO trong thẻ từ góc đó.
-const BURN_CORNERS = [
-  { cx: 0, cy: 0, sx: 1,  sy: 1  },
-  { cx: 1, cy: 0, sx: -1, sy: 1  },
-  { cx: 0, cy: 1, sx: 1,  sy: -1 },
-  { cx: 1, cy: 1, sx: -1, sy: -1 }
-];
+// Tàn lửa nhỏ bay từ ngoài rìa màn hình hội tụ dồn vào đúng điểm sẽ bén
+// lửa trên thẻ — tạo nhịp "chờ đợi - dồn lại" trước khi bùng cháy, thay
+// vì lửa bắt đầu ngay lập tức. Dùng CSS transition thay vì rAF cho từng
+// hạt (nhẹ hơn, mượt hơn khi có nhiều hạt cùng lúc).
+function spawnConvergeSpark(sx, sy, tx, ty, delay, duration, big){
+  const el = document.createElement('div');
+  el.className = 'spark-converge' + (big ? ' big' : '');
+  el.style.left = sx.toFixed(1) + 'px';
+  el.style.top = sy.toFixed(1) + 'px';
+  emberConvergeLayer.appendChild(el);
+  void el.offsetWidth;
+  requestAnimationFrame(() => {
+    el.style.transition =
+      `left ${duration}ms cubic-bezier(.5,0,1,.4) ${delay}ms, ` +
+      `top ${duration}ms cubic-bezier(.5,0,1,.4) ${delay}ms, ` +
+      `transform ${duration}ms cubic-bezier(.5,0,1,.4) ${delay}ms, ` +
+      `opacity 140ms ease ${delay}ms`;
+    el.classList.add('visible');
+    el.style.left = tx.toFixed(1) + 'px';
+    el.style.top = ty.toFixed(1) + 'px';
+    el.style.transform = 'scale(0.3)';
+  });
+  setTimeout(() => el.remove(), delay + duration + 80);
+}
+
+// Bắn ra 1 đợt tàn lửa hội tụ từ quanh màn hình vào (tx, ty) — trả về
+// tổng thời gian (ms) tới khi hạt cuối cùng hội tụ xong, để phần gọi biết
+// khi nào nên bùng lửa.
+function convergeEmbersTo(tx, ty){
+  emberConvergeLayer.innerHTML = '';
+  const COUNT = 20;
+  const spread = Math.min(window.innerWidth, window.innerHeight);
+  let maxFinish = 0;
+  for(let i = 0; i < COUNT; i++){
+    const angle = rand(0, Math.PI * 2);
+    const dist = rand(spread * 0.22, spread * 0.62);
+    const sx = tx + Math.cos(angle) * dist;
+    const sy = ty + Math.sin(angle) * dist;
+    const delay = rand(0, 420);
+    const duration = rand(520, 820);
+    const big = Math.random() < 0.3;
+    spawnConvergeSpark(sx, sy, tx, ty, delay, duration, big);
+    maxFinish = Math.max(maxFinish, delay + duration);
+  }
+  return maxFinish;
+}
+
+function triggerIgniteFlash(x, y){
+  igniteFlashEl.style.left = x.toFixed(1) + 'px';
+  igniteFlashEl.style.top = y.toFixed(1) + 'px';
+  igniteFlashEl.classList.remove('active');
+  void igniteFlashEl.offsetWidth;
+  igniteFlashEl.classList.add('active');
+}
 
 function triggerCardFlip(){
   if(cardFlipped || !document.body.classList.contains('phase-reveal')) return;
   cardFlipped = true;
   stage.classList.remove('awaiting-flip');
   document.body.classList.remove('awaiting-flip');
+
+  if(hintText){ hintText.textContent = 'Tàn lửa đang tụ lại…'; replayAnim(hintText); }
+
+  // Điểm sẽ bén lửa — gần giữa thẻ, có xê dịch ngẫu nhiên mỗi lượt để
+  // không lặp lại y hệt nhau. Tàn lửa từ khắp màn hình sẽ hội tụ về đây
+  // trước khi bùng thành lửa lan toả hình tròn ra khắp thẻ.
+  const rect = cardBackEl.getBoundingClientRect();
+  const W = Math.max(1, rect.width), H = Math.max(1, rect.height);
+  const ox = W * (0.5 + rand(-0.14, 0.14));
+  const oy = H * (0.5 + rand(-0.14, 0.14));
+  const targetX = rect.left + ox;
+  const targetY = rect.top + oy;
+
+  const convergeMs = convergeEmbersTo(targetX, targetY);
+
+  convergeTimeoutId = setTimeout(() => {
+    convergeTimeoutId = null;
+    igniteAndBurn(ox, oy, targetX, targetY, W, H);
+  }, convergeMs + 60);
+}
+
+/* ==================================================================
+   Sau khi tàn lửa hội tụ xong: bùng loé sáng tại điểm hội tụ, rồi lửa
+   lan toả hình tròn (mọi hướng, không chỉ 1 góc) ra khắp mặt sau, lộ
+   dần mặt trước bên dưới. Dùng clip-path (path SVG) tính động mỗi khung
+   hình thay vì nhiều lớp radial-gradient chồng — cho viền cháy là 1
+   đường liền mạch, lởm chởm tự nhiên, không bị vỡ thành các "vòng" giả.
+   ================================================================== */
+function igniteAndBurn(ox, oy, targetX, targetY, W, H){
+  triggerIgniteFlash(targetX, targetY);
 
   labelBox.style.display = '';
   if(hintText){ hintText.textContent = 'Di chuột hoặc chạm để xoay thẻ'; replayAnim(hintText); }
@@ -1345,35 +1522,47 @@ function triggerCardFlip(){
   replayAnim(document.getElementById('revealFlash'));
   document.querySelectorAll('#revealFlash .ember').forEach(replayAnim);
 
-  // ----- Kích thước thật của thẻ (px) để dựng path chính xác theo pixel -----
-  const rect = cardBackEl.getBoundingClientRect();
-  const W = Math.max(1, rect.width), H = Math.max(1, rect.height);
-  const diag = Math.sqrt(W * W + H * H);
-  const corner = BURN_CORNERS[Math.floor(Math.random() * BURN_CORNERS.length)];
-  const ox = corner.cx * W, oy = corner.cy * H;
+  // Bán kính cần để lửa lan phủ hết thẻ từ điểm (ox, oy) — khoảng cách xa
+  // nhất tới 1 trong 4 góc thẻ (vì điểm bén lửa nằm giữa thẻ, không phải
+  // ở góc, nên bán kính cần dùng phải tính theo góc xa nhất).
+  const farX = Math.max(ox, W - ox);
+  const farY = Math.max(oy, H - oy);
+  const diag = Math.sqrt(farX * farX + farY * farY);
 
   // Vài lớp nhiễu (hoạ tiết sóng sin chồng tần số khác nhau) áp lên bán
   // kính theo góc quét — tạo mép cháy lởm chởm, mỗi lần đốt một hình dạng
   // khác nhau, không lặp lại, và có rung nhẹ theo thời gian như lửa thật
   // đang liếm/nhấp nháy chứ không phải 1 đường viền cứng đơ.
-  const harmonics = [2, 3, 5, 9, 16, 27].map((k) => ({
-    k, amp: (k <= 9 ? rand(0.05, 0.13) : rand(0.012, 0.03)) / Math.sqrt(k), phase: rand(0, Math.PI * 2), tSpeed: rand(0.0015, 0.004)
+  const harmonics = [2, 3, 5, 7, 9, 13, 19, 27, 42].map((k) => ({
+    k, amp: (k <= 9 ? rand(0.12, 0.26) : (k <= 19 ? rand(0.035, 0.07) : rand(0.015, 0.03))) / Math.sqrt(k), phase: rand(0, Math.PI * 2), tSpeed: rand(0.002, 0.006)
   }));
+  // Nhiễu răng cưa tần số cao — dùng sin đã "chỉnh lũy thừa" (dấu giữ nguyên,
+  // biên độ mũ 3) để tạo các gai nhọn hẹp xen giữa các đoạn phẳng, giống vết
+  // xé của giấy cháy, thay vì toàn bộ là đường cong tròn trịa của sin thuần.
+  const jagK = [23, 34, 51, 71];
+  const jagPhase = jagK.map(() => rand(0, Math.PI * 2));
   function noise(theta, t){
     let n = 0;
     for(const h of harmonics) n += h.amp * Math.sin(h.k * theta + h.phase + t * h.tSpeed);
-    return n;
+    let jag = 0;
+    for(let i = 0; i < jagK.length; i++){
+      const s = Math.sin(jagK[i] * theta + jagPhase[i]);
+      jag += Math.sign(s) * Math.pow(Math.abs(s), 3) * (0.028 / (i + 1));
+    }
+    return n + jag;
   }
 
-  const SEGMENTS = 22;
+  // Quét trọn 1 vòng tròn (0 → 2π) quanh điểm bén lửa thay vì chỉ 1/4
+  // cung như trước — vì giờ lửa lan ra MỌI hướng từ 1 điểm giữa thẻ.
+  const SEGMENTS = 56;
   function sectorPath(R, t, scale){
-    let d = `M${ox.toFixed(1)},${oy.toFixed(1)} `;
+    let d = '';
     for(let i = 0; i <= SEGMENTS; i++){
-      const theta = (i / SEGMENTS) * (Math.PI / 2);
+      const theta = (i / SEGMENTS) * Math.PI * 2;
       const r = Math.max(0, R * scale * (1 + noise(theta, t)));
-      const px = ox + corner.sx * Math.cos(theta) * r;
-      const py = oy + corner.sy * Math.sin(theta) * r;
-      d += `L${px.toFixed(1)},${py.toFixed(1)} `;
+      const px = ox + Math.cos(theta) * r;
+      const py = oy + Math.sin(theta) * r;
+      d += (i === 0 ? `M${px.toFixed(1)},${py.toFixed(1)} ` : `L${px.toFixed(1)},${py.toFixed(1)} `);
     }
     d += 'Z';
     return d;
@@ -1384,7 +1573,7 @@ function triggerCardFlip(){
   const startTime = performance.now();
   burnFlameEl.classList.add('active');
   burnFlameEl.style.background =
-    `radial-gradient(circle at ${ox.toFixed(1)}px ${oy.toFixed(1)}px, #fff8e6 0%, #ffe19a 8%, #ffb04a 18%, #ff7a1f 32%, #e8380d 48%, #7a1704 66%, #2a0a03 80%, transparent 94%)`;
+    `radial-gradient(circle at ${ox.toFixed(1)}px ${oy.toFixed(1)}px, #fff8e6 0%, #ffe19a 5%, #ffb04a 11%, #ff7a1f 19%, #e8380d 30%, #941f06 42%, #2a0a03 58%, transparent 76%)`;
 
   let lastEmberTime = 0;
 
@@ -1397,26 +1586,39 @@ function triggerCardFlip(){
     const eased = p < 0.18
       ? Math.pow(p / 0.18, 1.4) * 0.16
       : 0.16 + (1 - Math.pow(1 - (p - 0.18) / 0.82, 2.1)) * 0.84;
-    const R = eased * diag * 1.12;
+    const flicker = 1 + Math.sin(t * 0.05) * 0.012 + (Math.random() - 0.5) * 0.018;
+    const R = eased * diag * 1.12 * flicker;
 
     const mainPath = sectorPath(R, t, 1);
     cardBackEl.style.clipPath = `path(evenodd, "${outerRect} ${mainPath}")`;
+
+    // Vết than: đúng bằng vùng đã cháy qua (mainPath), co lại một chút so
+    // với mép lửa đang cháy (0.94) để phần than luôn nằm khuất dưới dải lửa
+    // sáng, không lộ viền cứng giữa 2 lớp.
+    burnCharEl.classList.add('active');
+    burnCharEl.style.clipPath = `path(evenodd, "${outerRect} ${sectorPath(R, t, 0.94)}")`;
 
     // Dải lửa+than liền mạch bám sát đúng mép đang cháy (giữa 2 path lệch
     // bán kính) — gradient bên trong .burn-flame tự chuyển từ than đen
     // (phía trong, giáp phần giấy còn nguyên) sang cam/vàng rực (đúng mép
     // ngoài đang cháy), nên không cần lớp than tách rời chồng lên trên —
     // tất cả là MỘT dải duy nhất luôn khớp hình lởm chởm của mép cháy.
-    const glowOuter = sectorPath(R, t, 1.04);
-    const glowInner = sectorPath(R, t, 0.72);
+    const glowOuter = sectorPath(R, t, 1.035);
+    const glowInner = sectorPath(R, t, 0.86);
     burnFlameEl.style.clipPath = `path(evenodd, "${glowOuter} ${glowInner}")`;
+
+    // Bóng mép quăn: dải rất hẹp ngay sát trong mép lửa (0.80–0.865), giả
+    // lập giấy hơi cong vênh lên khi cháy nên đổ bóng tối xuống phần than
+    // ngay bên dưới — phá vỡ cảm giác "cắt phẳng lì" của clip-path.
+    burnCurlEl.classList.add('active');
+    burnCurlEl.style.clipPath = `path(evenodd, "${sectorPath(R, t, 0.865)} ${sectorPath(R, t, 0.80)}")`;
 
     if(p < 0.92 && now - lastEmberTime > 55 && Math.random() < 0.6){
       lastEmberTime = now;
-      const theta = rand(0, Math.PI / 2);
+      const theta = rand(0, Math.PI * 2);
       const r = Math.max(0, R * (1 + noise(theta, t)));
-      const ex = Math.max(1, Math.min(99, ((ox + corner.sx * Math.cos(theta) * r) / W) * 100));
-      const ey = Math.max(1, Math.min(99, ((oy + corner.sy * Math.sin(theta) * r) / H) * 100));
+      const ex = Math.max(1, Math.min(99, ((ox + Math.cos(theta) * r) / W) * 100));
+      const ey = Math.max(1, Math.min(99, ((oy + Math.sin(theta) * r) / H) * 100));
       spawnBurnEmber(ex, ey);
     }
 
@@ -1428,6 +1630,8 @@ function triggerCardFlip(){
       cardBackEl.style.pointerEvents = 'none';
       burnFlameEl.classList.remove('active');
       burnFlameEl.style.background = '';
+      burnCharEl.classList.remove('active');
+      burnCurlEl.classList.remove('active');
     }
   }
   burnAnimId = requestAnimationFrame(frame);
