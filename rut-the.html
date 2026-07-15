@@ -30,7 +30,7 @@
     --radius: 4mm;
     --card-depth: 10px;
     /* Ảnh mặt sau thẻ — thay đường dẫn này bằng ảnh mặt sau của bạn */
-    --back-card-img: url('images/mat-sau.png');
+    --back-card-img: url('images/mat-sau.webp');
   }
 
   *{box-sizing:border-box;}
@@ -661,10 +661,16 @@
     pointer-events:none;
     mix-blend-mode: screen;
     opacity:0;
-    filter: blur(5px);
+    filter: blur(2.5px);
     transition: opacity 0.25s ease;
   }
   .burn-flame.active{ opacity:1; }
+  /* (Đã bỏ lớp .burn-char phủ texture riêng — gây cảm giác giả vì là 1
+     lớp hoạ tiết tách rời đè lên trên, không gắn liền với hình dạng mép
+     cháy thật. Thay vào đó, màu than/cháy được vẽ ngay trong gradient
+     của chính .burn-flame — mảnh, bám sát viền — và độ lởm chởm của mép
+     đến từ chính clip-path (nhiều tần số nhiễu hơn) thay vì texture giả
+     chồng lên trên.) */
   /* Lớp chứa tàn lửa/hạt lửa bắn ra dọc theo mép lửa đang lan */
   .burn-ember-layer{
     position:absolute; inset:0;
@@ -1350,8 +1356,8 @@ function triggerCardFlip(){
   // kính theo góc quét — tạo mép cháy lởm chởm, mỗi lần đốt một hình dạng
   // khác nhau, không lặp lại, và có rung nhẹ theo thời gian như lửa thật
   // đang liếm/nhấp nháy chứ không phải 1 đường viền cứng đơ.
-  const harmonics = [2, 3, 5, 9].map((k) => ({
-    k, amp: rand(0.05, 0.13) / Math.sqrt(k), phase: rand(0, Math.PI * 2), tSpeed: rand(0.0015, 0.004)
+  const harmonics = [2, 3, 5, 9, 16, 27].map((k) => ({
+    k, amp: (k <= 9 ? rand(0.05, 0.13) : rand(0.012, 0.03)) / Math.sqrt(k), phase: rand(0, Math.PI * 2), tSpeed: rand(0.0015, 0.004)
   }));
   function noise(theta, t){
     let n = 0;
@@ -1378,7 +1384,7 @@ function triggerCardFlip(){
   const startTime = performance.now();
   burnFlameEl.classList.add('active');
   burnFlameEl.style.background =
-    `radial-gradient(circle at ${ox.toFixed(1)}px ${oy.toFixed(1)}px, #fff3d6 0%, #ffce7a 20%, #ff9a3d 40%, #ff5a1a 58%, #b32405 74%, transparent 92%)`;
+    `radial-gradient(circle at ${ox.toFixed(1)}px ${oy.toFixed(1)}px, #fff8e6 0%, #ffe19a 8%, #ffb04a 18%, #ff7a1f 32%, #e8380d 48%, #7a1704 66%, #2a0a03 80%, transparent 94%)`;
 
   let lastEmberTime = 0;
 
@@ -1396,11 +1402,13 @@ function triggerCardFlip(){
     const mainPath = sectorPath(R, t, 1);
     cardBackEl.style.clipPath = `path(evenodd, "${outerRect} ${mainPath}")`;
 
-    // Dải sáng lửa mỏng bám sát đúng mép đang cháy (giữa 2 path lệch bán
-    // kính rất gần nhau) — luôn khớp hình dạng lởm chởm của mép cháy thật,
-    // không lệch pha như cách dùng gradient tròn trước đây.
-    const glowOuter = sectorPath(R, t, 1.07);
-    const glowInner = sectorPath(R, t, 0.86);
+    // Dải lửa+than liền mạch bám sát đúng mép đang cháy (giữa 2 path lệch
+    // bán kính) — gradient bên trong .burn-flame tự chuyển từ than đen
+    // (phía trong, giáp phần giấy còn nguyên) sang cam/vàng rực (đúng mép
+    // ngoài đang cháy), nên không cần lớp than tách rời chồng lên trên —
+    // tất cả là MỘT dải duy nhất luôn khớp hình lởm chởm của mép cháy.
+    const glowOuter = sectorPath(R, t, 1.04);
+    const glowInner = sectorPath(R, t, 0.72);
     burnFlameEl.style.clipPath = `path(evenodd, "${glowOuter} ${glowInner}")`;
 
     if(p < 0.92 && now - lastEmberTime > 55 && Math.random() < 0.6){
