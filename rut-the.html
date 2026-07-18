@@ -985,15 +985,15 @@ const MUC_TITLES = {
 /* ==================================================================
    NGUỒN THẺ THẬT
    ------------------------------------------------------------------
-   Ngay khi người dùng bấm "RÚT THẺ", trang sẽ tự động tải (fetch) từng
-   trang công diễn dưới đây và quét trong đó những thẻ ĐÃ có ảnh thật
-   (dựa theo cùng cấu trúc .muc-block > .collection-num + .slot .art
-   với ảnh thật là các thẻ có gắn sẵn background-image; thẻ nào chưa có
-   ảnh — .art không có background-image — sẽ tự động bị bỏ qua).
-
-   Nếu file đang mở trực tiếp trên máy (không qua server) hoặc một
-   trang công diễn nào đó không tải được, hệ thống sẽ tự dùng bộ thẻ
-   dự phòng FALLBACK_CARDS bên dưới để không bao giờ bị "rút hụt".
+   Ngay khi trang vừa mở, hệ thống sẽ tự động tải (fetch) từng trang công
+   diễn dưới đây, đọc danh sách thẻ khai báo trong mã nguồn của trang đó
+   (mảng "const CARDS = [...]"), rồi XÁC MINH TỪNG ẢNH có thật sự tải
+   được hay không (ảnh vỡ link / chưa upload / sai đường dẫn sẽ bị loại
+   ngay). CHỈ những thẻ có ảnh thật load thành công mới được đưa vào bộ
+   thẻ để rút — không có bộ thẻ dự phòng nào khác. Nếu không quét được
+   thẻ nào (ví dụ mở file trực tiếp trên máy không qua server, hoặc toàn
+   bộ trang công diễn đều lỗi/chưa có ảnh), nút "RÚT THẺ" sẽ báo không
+   có thẻ nào khả dụng thay vì tự chọn đại một bộ thẻ khác.
 
    Nếu cấu trúc HTML thật của các trang công diễn khác với giả định
    trên, gửi mình 1 file mẫu để chỉnh lại đúng selector.
@@ -1018,53 +1018,6 @@ const PAGE_TITLES = {
   'cong-dien-5.html': 'Công Diễn 5',
   'chung-ket.html': 'Chung Kết'
 };
-
-const FALLBACK_CARDS = [
-  { muc: 1, img: "images/cong-dien-hoi-ngo/muc-01/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 1, img: "images/cong-dien-hoi-ngo/muc-01/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 1, img: "images/cong-dien-hoi-ngo/muc-01/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 1, img: "images/cong-dien-hoi-ngo/muc-01/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 2, img: "images/cong-dien-hoi-ngo/muc-02/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 2, img: "images/cong-dien-hoi-ngo/muc-02/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 2, img: "images/cong-dien-hoi-ngo/muc-02/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 2, img: "images/cong-dien-hoi-ngo/muc-02/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 2, img: "images/cong-dien-hoi-ngo/muc-02/anh-the-5.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 3, img: "images/cong-dien-hoi-ngo/muc-03/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 3, img: "images/cong-dien-hoi-ngo/muc-03/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 3, img: "images/cong-dien-hoi-ngo/muc-03/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 3, img: "images/cong-dien-hoi-ngo/muc-03/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 4, img: "images/cong-dien-hoi-ngo/muc-04/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 4, img: "images/cong-dien-hoi-ngo/muc-04/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 4, img: "images/cong-dien-hoi-ngo/muc-04/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 4, img: "images/cong-dien-hoi-ngo/muc-04/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 5, img: "images/cong-dien-hoi-ngo/muc-05/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 5, img: "images/cong-dien-hoi-ngo/muc-05/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 5, img: "images/cong-dien-hoi-ngo/muc-05/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 5, img: "images/cong-dien-hoi-ngo/muc-05/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 6, img: "images/cong-dien-hoi-ngo/muc-06/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 6, img: "images/cong-dien-hoi-ngo/muc-06/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 6, img: "images/cong-dien-hoi-ngo/muc-06/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 6, img: "images/cong-dien-hoi-ngo/muc-06/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 7, img: "images/cong-dien-hoi-ngo/muc-07/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 7, img: "images/cong-dien-hoi-ngo/muc-07/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 7, img: "images/cong-dien-hoi-ngo/muc-07/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 7, img: "images/cong-dien-hoi-ngo/muc-07/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 8, img: "images/cong-dien-hoi-ngo/muc-08/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 8, img: "images/cong-dien-hoi-ngo/muc-08/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 8, img: "images/cong-dien-hoi-ngo/muc-08/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 8, img: "images/cong-dien-hoi-ngo/muc-08/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 9, img: "images/cong-dien-hoi-ngo/muc-09/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 9, img: "images/cong-dien-hoi-ngo/muc-09/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 9, img: "images/cong-dien-hoi-ngo/muc-09/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 9, img: "images/cong-dien-hoi-ngo/muc-09/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 9, img: "images/cong-dien-hoi-ngo/muc-09/anh-the-5.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 9, img: "images/cong-dien-hoi-ngo/muc-09/anh-the-6.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 10, img: "images/cong-dien-hoi-ngo/muc-10/anh-the-1.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 10, img: "images/cong-dien-hoi-ngo/muc-10/anh-the-2.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 10, img: "images/cong-dien-hoi-ngo/muc-10/anh-the-3.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 10, img: "images/cong-dien-hoi-ngo/muc-10/anh-the-4.webp", source: "Công Diễn Hội Ngộ" },
-  { muc: 10, img: "images/cong-dien-hoi-ngo/muc-10/anh-the-5.webp", source: "Công Diễn Hội Ngộ" }
-];
 
 // ---------------------------------------------------------------------
 // QUAN TRỌNG: các trang công diễn (cong-dien-1.html, cong-dien-hoi-ngo.html…)
@@ -1123,10 +1076,32 @@ async function fetchCardsFromPage(url){
   }
 }
 
+// Xác minh 1 ảnh có thật sự tải được hay không (ảnh vỡ link / 404 / chưa
+// upload sẽ resolve(false) và bị loại khỏi bộ thẻ để rút).
+function verifyImageLoads(url, timeoutMs = 8000){
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = (ok) => {
+      if(done) return;
+      done = true;
+      resolve(ok);
+    };
+    const img = new Image();
+    img.onload = () => finish(true);
+    img.onerror = () => finish(false);
+    img.src = url;
+    setTimeout(() => finish(false), timeoutMs);
+  });
+}
+
 async function buildCardsPool(){
   const perPage = await Promise.all(SOURCE_PAGES.map(fetchCardsFromPage));
   const merged = perPage.flat();
-  return merged.length ? merged : FALLBACK_CARDS;
+  // Chỉ giữ lại thẻ nào ảnh thật sự load được — không có bộ thẻ dự phòng nào khác.
+  const checks = await Promise.all(
+    merged.map(async (c) => ((await verifyImageLoads(c.img)) ? c : null))
+  );
+  return checks.filter(Boolean);
 }
 
 function withTimeout(promise, ms, fallbackValue){
@@ -1140,7 +1115,9 @@ function withTimeout(promise, ms, fallbackValue){
 let cardsPoolPromise = null;
 function getCardsPool(){
   if(!cardsPoolPromise) cardsPoolPromise = buildCardsPool();
-  return withTimeout(cardsPoolPromise, 4000, FALLBACK_CARDS);
+  // Nếu quá 12s vẫn chưa quét/xác minh xong (mạng chậm, nhiều ảnh cần kiểm
+  // tra), trả về mảng rỗng tạm thời — không còn fallback cứng nào cả.
+  return withTimeout(cardsPoolPromise, 12000, []);
 }
 
 // ---- Dòng hiển thị số thẻ hợp lệ đã quét được (dưới tiêu đề "Rút Thẻ") ----
@@ -1148,6 +1125,10 @@ const cardCountLineEl = document.getElementById('cardCountLine');
 function updateCardCountLine(pool){
   if(!cardCountLineEl) return;
   const n = pool.length;
+  if(n === 0){
+    cardCountLineEl.textContent = 'Không tìm thấy thẻ nào';
+    return;
+  }
   const sourceCount = new Set(pool.map(c => c.source)).size;
   cardCountLineEl.textContent = `${n} thẻ · ${sourceCount} công diễn`;
 }
@@ -1367,6 +1348,12 @@ async function startDrawSequence(){
 
   // Cần có kết quả (thẻ thật) trước khi loé sáng chuyển cảnh
   const pool = await poolPromise;
+
+  if(pool.length === 0){
+    abortDrawNoCards();
+    return;
+  }
+
   const card = pickRandomCard(pool);
 
   // Bước 3 — loé sáng toàn màn hình; đợi đúng lúc gần đỉnh sáng nhất
@@ -1384,6 +1371,24 @@ async function startDrawSequence(){
   // Nút RÚT THẺ được ẩn ngay khi vào phase-reveal (CSS), trả lại nhãn
   // gốc để sẵn sàng cho lần rút tiếp theo (sau khi bấm "Rút Thẻ Khác").
   drawBtn.textContent = drawBtnDefaultText;
+}
+
+// Không quét được thẻ ảnh thật nào (mạng lỗi, chưa có ảnh, mở file trực
+// tiếp không qua server…) — huỷ pha "văng thẻ", trả các thẻ xáo về trạng
+// thái ban đầu, báo cho người dùng biết và cho phép bấm rút lại.
+function abortDrawNoCards(){
+  currentOrder.forEach((el) => {
+    el.style.opacity = '1';
+    el.style.zIndex = '';
+  });
+  currentOrder = shuffleEls.slice();
+  stopped = false;
+  drawBtn.disabled = false;
+  drawBtn.textContent = drawBtnDefaultText;
+  updateCardCountLine([]);
+  generation++;
+  shuffleCycle(generation);
+  alert('Không tìm thấy thẻ nào để rút. Vui lòng kiểm tra lại các trang công diễn (ảnh đã upload đúng đường dẫn chưa) rồi thử lại.');
 }
 
 drawBtn.addEventListener('click', () => {
