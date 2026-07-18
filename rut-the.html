@@ -965,6 +965,7 @@
 
   </div>
 
+<script src="cards-pool.js"></script>
 <script>
 /* ==================================================================
    DANH SÁCH THẺ (lấy từ cong-dien-hoi-ngo.html)
@@ -985,139 +986,21 @@ const MUC_TITLES = {
 /* ==================================================================
    NGUỒN THẺ THẬT
    ------------------------------------------------------------------
-   Ngay khi trang vừa mở, hệ thống sẽ tự động tải (fetch) từng trang công
-   diễn dưới đây, đọc danh sách thẻ khai báo trong mã nguồn của trang đó
-   (mảng "const CARDS = [...]"), rồi XÁC MINH TỪNG ẢNH có thật sự tải
-   được hay không (ảnh vỡ link / chưa upload / sai đường dẫn sẽ bị loại
-   ngay). CHỈ những thẻ có ảnh thật load thành công mới được đưa vào bộ
-   thẻ để rút — không có bộ thẻ dự phòng nào khác. Nếu không quét được
-   thẻ nào (ví dụ mở file trực tiếp trên máy không qua server, hoặc toàn
-   bộ trang công diễn đều lỗi/chưa có ảnh), nút "RÚT THẺ" sẽ báo không
-   có thẻ nào khả dụng thay vì tự chọn đại một bộ thẻ khác.
+   Logic quét (tải các trang công diễn, đọc mảng "const CARDS = [...]",
+   xác minh từng ảnh có load được không) nay nằm chung trong file
+   cards-pool.js (dùng chung với index.html) — xem <script src="cards-pool.js">
+   ở đầu trang. CHỈ những thẻ có ảnh thật load thành công mới được đưa
+   vào bộ thẻ để rút — không có bộ thẻ dự phòng nào khác.
 
-   Nếu cấu trúc HTML thật của các trang công diễn khác với giả định
-   trên, gửi mình 1 file mẫu để chỉnh lại đúng selector.
+   Nếu index.html đã gọi CardsPool.warmCardsPool() từ trước (ngay lúc
+   người dùng mở trang chủ), kết quả quét + xác minh sẽ được lưu tạm
+   trong sessionStorage và tái sử dụng ngay ở đây — không phải quét lại
+   từ đầu khi vào trang Rút Thẻ.
    ================================================================== */
-const SOURCE_PAGES = [
-  'cong-dien-hoi-ngo.html',
-  'cong-dien-1.html',
-  'cong-dien-2.html',
-  'cong-dien-3.html',
-  'cong-dien-4.html',
-  'cong-dien-5.html',
-  'chung-ket.html'
-];
-
-// Tên hiển thị (badge) cho từng trang nguồn — khớp với tiêu đề các tile ở index.html.
-const PAGE_TITLES = {
-  'cong-dien-hoi-ngo.html': 'Công Diễn Hội Ngộ',
-  'cong-dien-1.html': 'Công Diễn 1',
-  'cong-dien-2.html': 'Công Diễn 2',
-  'cong-dien-3.html': 'Công Diễn 3',
-  'cong-dien-4.html': 'Công Diễn 4',
-  'cong-dien-5.html': 'Công Diễn 5',
-  'chung-ket.html': 'Chung Kết'
-};
-
-// ---------------------------------------------------------------------
-// QUAN TRỌNG: các trang công diễn (cong-dien-1.html, cong-dien-hoi-ngo.html…)
-// chèn ảnh thẻ vào DOM bằng JavaScript lúc trang CHẠY trong trình duyệt
-// (hàm makeSlot() ở mỗi trang tạo ra .art style="background-image:...").
-// fetch() ở đây chỉ tải về HTML THÔ, KHÔNG chạy script — nên .slot .art
-// không bao giờ tồn tại trong doc parse ra, dù trang nguồn đã có ảnh thật.
-// => Phải đọc thẳng mảng dữ liệu tĩnh `const CARDS = [...]` bằng regex
-//    trên chính chuỗi HTML thô (mảng này luôn có sẵn dạng text, không
-//    phụ thuộc script đã chạy hay chưa). Tên mục (collection-title) vẫn
-//    lấy được bình thường qua DOMParser vì đó là markup tĩnh có sẵn.
-// ---------------------------------------------------------------------
-function extractCardsFromHtml(html, doc, source){
-  // 1) Tên mục thật của từng số mục (nếu người tạo trang đã đổi tên khác
-  //    mặc định "Mục 0X"), để hiển thị đúng ở nhãn góc phải khi rút được thẻ.
-  const titleByMuc = {};
-  doc.querySelectorAll('.muc-block').forEach(block => {
-    const numEl = block.querySelector('.collection-num');
-    const titleEl = block.querySelector('.collection-title');
-    const muc = numEl ? parseInt(numEl.textContent, 10) : null;
-    if(!muc) return;
-    const title = titleEl ? titleEl.textContent.trim() : '';
-    if(title && !/^mục\s*0*\d+$/i.test(title)) titleByMuc[muc] = title;
-  });
-
-  // 2) Danh sách thẻ thật: đọc trực tiếp từ "const CARDS = [ ... ];" trong
-  //    mã nguồn thô của trang (không cần script đã chạy).
-  const found = [];
-  const arrayMatch = html.match(/const\s+CARDS\s*=\s*\[([\s\S]*?)\];/);
-  if(arrayMatch){
-    const body = arrayMatch[1];
-    const entryRe = /\{\s*muc\s*:\s*(\d+)\s*,\s*img\s*:\s*["']([^"']+)["']\s*\}/g;
-    let m;
-    while((m = entryRe.exec(body))){
-      const muc = parseInt(m[1], 10);
-      const img = m[2].trim();
-      if(!img) continue;
-      found.push({ muc, img, source, title: titleByMuc[muc] || '' });
-    }
-  }
-  return found;
-}
-
-async function fetchCardsFromPage(url){
-  try{
-    const res = await fetch(url, { cache: 'no-store' });
-    if(!res.ok) return [];
-    const html = await res.text();
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const cards = extractCardsFromHtml(html, doc, PAGE_TITLES[url] || url);
-    // Chuẩn hoá đường dẫn ảnh về URL tuyệt đối theo trang nguồn, để tránh
-    // lỗi hiển thị nếu rut-the.html không nằm cùng thư mục với trang đó.
-    return cards.map(c => ({ ...c, img: new URL(c.img, res.url).href }));
-  }catch(err){
-    return [];
-  }
-}
-
-// Xác minh 1 ảnh có thật sự tải được hay không (ảnh vỡ link / 404 / chưa
-// upload sẽ resolve(false) và bị loại khỏi bộ thẻ để rút).
-function verifyImageLoads(url, timeoutMs = 8000){
-  return new Promise((resolve) => {
-    let done = false;
-    const finish = (ok) => {
-      if(done) return;
-      done = true;
-      resolve(ok);
-    };
-    const img = new Image();
-    img.onload = () => finish(true);
-    img.onerror = () => finish(false);
-    img.src = url;
-    setTimeout(() => finish(false), timeoutMs);
-  });
-}
-
-async function buildCardsPool(){
-  const perPage = await Promise.all(SOURCE_PAGES.map(fetchCardsFromPage));
-  const merged = perPage.flat();
-  // Chỉ giữ lại thẻ nào ảnh thật sự load được — không có bộ thẻ dự phòng nào khác.
-  const checks = await Promise.all(
-    merged.map(async (c) => ((await verifyImageLoads(c.img)) ? c : null))
-  );
-  return checks.filter(Boolean);
-}
-
-function withTimeout(promise, ms, fallbackValue){
-  return Promise.race([
-    promise,
-    new Promise(resolve => setTimeout(() => resolve(fallbackValue), ms))
-  ]);
-}
 
 // Chỉ quét 1 lần rồi lưu lại cho các lượt rút thẻ tiếp theo (đỡ tải mạng lặp lại).
-let cardsPoolPromise = null;
 function getCardsPool(){
-  if(!cardsPoolPromise) cardsPoolPromise = buildCardsPool();
-  // Nếu quá 12s vẫn chưa quét/xác minh xong (mạng chậm, nhiều ảnh cần kiểm
-  // tra), trả về mảng rỗng tạm thời — không còn fallback cứng nào cả.
-  return withTimeout(cardsPoolPromise, 12000, []);
+  return window.CardsPool.getCardsPool();
 }
 
 // ---- Dòng hiển thị số thẻ hợp lệ đã quét được (dưới tiêu đề "Rút Thẻ") ----
