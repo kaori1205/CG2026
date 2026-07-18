@@ -206,11 +206,10 @@
     border-radius: var(--radius);
     overflow:hidden;
     background: var(--ember-deep);
-    padding:4px;
+    padding: clamp(9px, 3.2%, 14px);
     transform: translateZ(calc(var(--card-depth) / 2));
     box-shadow:
-      0 0 0 2px rgba(244,211,94,0.8),
-      0 0 0 3.5px rgba(10,5,3,0.55),
+      0 0 0 1px rgba(10,5,3,0.6),
       0 0 30px rgba(232,56,13,0.55),
       0 0 70px rgba(232,56,13,0.3),
       0 22px 44px -14px rgba(0,0,0,0.85),
