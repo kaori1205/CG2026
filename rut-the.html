@@ -902,6 +902,7 @@
 
   <div class="header" id="mainHeader">
     <h1>Rút Thẻ</h1>
+    <div class="sub" id="cardCountLine">Đang quét…</div>
   </div>
 
   <!-- ================= PHA 1: XÁO / TRỘN / TRẢI THẺ ================= -->
@@ -1115,6 +1116,19 @@ function getCardsPool(){
   if(!cardsPoolPromise) cardsPoolPromise = buildCardsPool();
   return withTimeout(cardsPoolPromise, 4000, FALLBACK_CARDS);
 }
+
+// ---- Dòng hiển thị số thẻ hợp lệ đã quét được (dưới tiêu đề "Rút Thẻ") ----
+const cardCountLineEl = document.getElementById('cardCountLine');
+function updateCardCountLine(pool){
+  if(!cardCountLineEl) return;
+  const n = pool.length;
+  const sourceCount = new Set(pool.map(c => c.source)).size;
+  cardCountLineEl.textContent = `${n} thẻ · ${sourceCount} công diễn`;
+}
+// Tự quét ngay khi vừa vào trang, không cần đợi bấm "RÚT THẺ".
+getCardsPool().then((pool) => {
+  updateCardCountLine(pool);
+});
 
 /* ==================================================================
    PHA 1 — ĐỘNG CƠ XÁO / TRỘN / TRẢI THẺ
