@@ -434,8 +434,14 @@
 
   <a class="fab-rutthe" href="rut-the.html">Rút Thẻ</a>
 
+<script src="cards-pool.js"></script>
 <script>
-
+// Bắt đầu quét + xác minh ảnh thẻ ngay khi trang chủ vừa mở, chạy ngầm
+// trong lúc người dùng còn đang xem trang này. Kết quả được lưu tạm
+// trong sessionStorage — lúc người dùng bấm nút "Rút Thẻ", trang
+// rut-the.html sẽ lấy lại kết quả đã quét sẵn này ngay lập tức thay vì
+// phải quét lại từ đầu.
+if(window.CardsPool) window.CardsPool.warmCardsPool();
 </script>
 
 </body>
