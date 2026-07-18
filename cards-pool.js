@@ -95,9 +95,48 @@
     }
   }
 
-  // Xác minh 1 ảnh có thật sự tải được hay không (ảnh vỡ link / 404 / chưa
-  // upload sẽ resolve(false) và bị loại khỏi bộ thẻ để rút).
-  function verifyImageLoads(url, timeoutMs = 8000) {
+  const IMG_CACHE_KEY = 'cardsPool.imgVerified.v1';
+  const IMG_CACHE_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24 giờ
+
+  // Cache riêng cho "ảnh nào đã xác minh load được" — sống lâu hơn nhiều so
+  // với cache của cả bộ thẻ (sessionStorage 15 phút), lưu ở localStorage nên
+  // giữ được cả sau khi đóng tab/trình duyệt. Nhờ vậy, những lần quét sau
+  // (kể cả mở lại vào hôm sau) sẽ bỏ qua hẳn bước gọi mạng cho các ảnh đã
+  // biết chắc là tồn tại — chỉ còn phải kiểm tra ảnh MỚI thật sự.
+  let imgCache = null;
+  function getImgCache() {
+    if (imgCache) return imgCache;
+    try {
+      const raw = localStorage.getItem(IMG_CACHE_KEY);
+      const parsed = raw ? JSON.parse(raw) : null;
+      imgCache = (parsed && typeof parsed === 'object') ? parsed : {};
+    } catch (err) {
+      imgCache = {};
+    }
+    return imgCache;
+  }
+  let imgCacheDirty = false;
+  function isImgVerifiedFresh(url) {
+    const t = getImgCache()[url];
+    return typeof t === 'number' && (Date.now() - t) < IMG_CACHE_MAX_AGE_MS;
+  }
+  function markImgVerified(url) {
+    getImgCache()[url] = Date.now();
+    imgCacheDirty = true;
+  }
+  function flushImgCache() {
+    if (!imgCacheDirty) return;
+    try {
+      localStorage.setItem(IMG_CACHE_KEY, JSON.stringify(getImgCache()));
+    } catch (err) {
+      // localStorage đầy/bị chặn — bỏ qua, chỉ mất tác dụng cache, không lỗi.
+    }
+    imgCacheDirty = false;
+  }
+
+  // Xác minh bằng <img> thật (tải trọn ảnh) — chỉ dùng làm phương án dự
+  // phòng khi HEAD request thất bại (một số server tĩnh chặn method HEAD).
+  function verifyImageViaImgTag(url, timeoutMs) {
     return new Promise((resolve) => {
       let done = false;
       const finish = (ok) => {
@@ -106,6 +145,7 @@
         resolve(ok);
       };
       const img = new Image();
+      if ('fetchPriority' in img) img.fetchPriority = 'high';
       img.onload = () => finish(true);
       img.onerror = () => finish(false);
       img.src = url;
@@ -113,14 +153,54 @@
     });
   }
 
+  // Xác minh 1 ảnh có thật sự tồn tại hay không — ƯU TIÊN dùng HEAD request
+  // (chỉ hỏi header, KHÔNG tải dữ liệu ảnh) nên nhanh hơn nhiều so với tải
+  // trọn file ảnh, nhất là khi có nhiều ảnh kiểm tra cùng lúc. Nếu HEAD bị
+  // server từ chối/không hỗ trợ, tự động rơi về cách cũ (tải bằng <img>).
+  async function verifyImageLoads(url, timeoutMs = 6000) {
+    if (isImgVerifiedFresh(url)) return true;
+
+    let ok = false;
+    try {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), timeoutMs);
+      const res = await fetch(url, { method: 'HEAD', signal: controller.signal });
+      clearTimeout(timer);
+      if (res.ok) {
+        ok = true;
+      } else if (res.status === 405 || res.status === 501) {
+        // Server không hỗ trợ HEAD — thử lại bằng cách tải ảnh thật.
+        ok = await verifyImageViaImgTag(url, timeoutMs);
+      } else {
+        ok = false;
+      }
+    } catch (err) {
+      // Lỗi mạng/CORS khi HEAD — vẫn có thể do server chặn HEAD nhưng cho GET,
+      // nên thử lại bằng <img> trước khi kết luận ảnh không tồn tại.
+      ok = await verifyImageViaImgTag(url, timeoutMs);
+    }
+
+    if (ok) markImgVerified(url);
+    return ok;
+  }
+
   async function buildCardsPool() {
-    const perPage = await Promise.all(SOURCE_PAGES.map(fetchCardsFromPage));
-    const merged = perPage.flat();
-    // Chỉ giữ lại thẻ nào ảnh thật sự load được — không có bộ thẻ dự phòng nào khác.
-    const checks = await Promise.all(
-      merged.map(async (c) => ((await verifyImageLoads(c.img)) ? c : null))
+    // Quét theo pipeline: mỗi trang công diễn tự tải HTML rồi xác minh ảnh
+    // của CHÍNH trang đó ngay khi vừa đọc xong — không phải đợi tải hết mọi
+    // trang rồi mới bắt đầu xác minh ảnh (giúp trang nhanh không bị trang
+    // chậm hơn kéo lùi thời điểm bắt đầu kiểm tra ảnh của nó).
+    const perPage = await Promise.all(
+      SOURCE_PAGES.map(async (url) => {
+        const cards = await fetchCardsFromPage(url);
+        const checked = await Promise.all(
+          cards.map(async (c) => ((await verifyImageLoads(c.img)) ? c : null))
+        );
+        return checked.filter(Boolean);
+      })
     );
-    return checks.filter(Boolean);
+    flushImgCache();
+    // Chỉ giữ lại thẻ nào ảnh thật sự tồn tại — không có bộ thẻ dự phòng nào khác.
+    return perPage.flat();
   }
 
   function readCache() {
