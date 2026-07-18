@@ -10,6 +10,7 @@
 
   :root{
     --void:#0a0503;
+    --ember-deep:#2c0904;
     --ember:#e8380d;
     --flame:#ff8a1e;
     --gold:#f4d35e;
@@ -204,13 +205,14 @@
     width:100%; height:100%;
     border-radius: var(--radius);
     overflow:hidden;
-    background: var(--iron);
+    background: var(--ember-deep);
     padding:4px;
     transform: translateZ(calc(var(--card-depth) / 2));
     box-shadow:
       0 0 0 2px rgba(244,211,94,0.8),
       0 0 0 3.5px rgba(10,5,3,0.55),
-      0 0 44px rgba(232,56,13,0.4),
+      0 0 30px rgba(232,56,13,0.55),
+      0 0 70px rgba(232,56,13,0.3),
       0 22px 44px -14px rgba(0,0,0,0.85),
       inset 0 1px 0 rgba(255,255,255,0.5),
       inset 0 -2px 3px rgba(0,0,0,0.35),
