@@ -22,7 +22,9 @@
     --card-ratio: 1635 / 2048;
     --radius: 4mm;
     --card-depth: 10px;
-    --frame-inset: clamp(9px, 3.2%, 14px);
+    --frame-outer: clamp(10px, 4.2%, 19px);
+    --frame-hairline: clamp(2.5px, 1%, 4.5px);
+    --frame-inset: calc(var(--frame-outer) + var(--frame-hairline));
     --notch: polygon(
       20% 0%, 90% 0%, 94% 4%, 96% 6%, 100% 10%,
       100% 85%, 95% 90%, 90% 95%, 85% 100%,
@@ -211,19 +213,22 @@
     position:relative;
     width:100%; height:100%;
     overflow:hidden;
-    background: var(--ember-deep);
-    padding: var(--frame-inset);
+    background: linear-gradient(160deg, #2c0904 0%, #170403 55%, #2c0904 100%);
+    padding: var(--frame-outer);
     transform: translateZ(calc(var(--card-depth) / 2));
-    clip-path: var(--notch);
+    border-radius: var(--radius);
     box-shadow:
       0 0 0 1px rgba(10,5,3,0.6),
       0 0 30px rgba(232,56,13,0.55),
       0 0 70px rgba(232,56,13,0.3),
       0 22px 44px -14px rgba(0,0,0,0.85),
-      inset 0 1px 0 rgba(255,255,255,0.5),
-      inset 0 -2px 3px rgba(0,0,0,0.35),
-      inset 2px 0 3px rgba(255,255,255,0.15),
-      inset -2px 0 3px rgba(0,0,0,0.25);
+      inset 0 1px 0 rgba(255,255,255,0.12),
+      inset 0 -2px 3px rgba(0,0,0,0.4);
+  }
+  .card-hairline{
+    width:100%; height:100%;
+    padding: var(--frame-hairline);
+    clip-path: var(--notch);
     background-image:
       linear-gradient(135deg, #f4ecd6 0%, #c9ccd0 18%, #8a8f96 32%, #f4ecd6 48%, #b8862f 60%, #8a8f96 78%, #d7dbe0 100%);
   }
@@ -278,7 +283,7 @@
   }
   .holo-edge{
     position:absolute; inset:0;
-    clip-path: var(--notch);
+    border-radius: var(--radius);
     transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     box-shadow: inset 0 0 0 1.5px rgba(255,255,255,0.35);
     opacity: var(--edge-op, 0);
@@ -288,7 +293,7 @@
   /* Vân hạt (grain) rất nhẹ để bề mặt bớt "sạch" kiểu digital, giống chất liệu in thật */
   .card-grain{
     position:absolute; inset:0;
-    clip-path: var(--notch);
+    border-radius: var(--radius);
     transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     opacity:0.05;
     mix-blend-mode: overlay;
@@ -300,7 +305,7 @@
      vì luôn bị mặt trước che kín ở mọi góc xoay. Dải cạnh vuông góc thật thì mới lộ ra khi nghiêng. */
   .card-back{
     position:absolute; inset:0;
-    clip-path: var(--notch);
+    border-radius: var(--radius);
     background-image:
       linear-gradient(135deg, #f4ecd6 0%, #c9ccd0 18%, #8a8f96 32%, #f4ecd6 48%, #b8862f 60%, #8a8f96 78%, #d7dbe0 100%);
     filter: brightness(0.45) saturate(0.9);
@@ -373,7 +378,7 @@
   /* Hạt sáng lấp lánh, xuất hiện ngẫu nhiên khi nghiêng thẻ mạnh -> tăng cảm giác "hiếm/foil" */
   .sparkle-layer{
     position:absolute; inset:0;
-    clip-path: var(--notch);
+    border-radius: var(--radius);
     overflow:hidden;
     pointer-events:none;
     transform: translateZ(calc(var(--card-depth) / 2 + 3px));
@@ -421,7 +426,9 @@
         <div class="card-side side-left"></div>
         <div class="card-side side-right"></div>
         <div class="card-face">
-          <div class="card-art"><div class="art" id="cardArt"></div></div>
+          <div class="card-hairline">
+            <div class="card-art"><div class="art" id="cardArt"></div></div>
+          </div>
         </div>
         <div class="shine-sweep" id="shineSweep"></div>
         <div class="holo-sheen" id="holoSheen"></div>
