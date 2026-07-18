@@ -10,7 +10,6 @@
 
   :root{
     --void:#0a0503;
-    --ember-deep:#2c0904;
     --ember:#e8380d;
     --flame:#ff8a1e;
     --gold:#f4d35e;
@@ -22,15 +21,6 @@
     --card-ratio: 1635 / 2048;
     --radius: 4mm;
     --card-depth: 10px;
-    --frame-outer: clamp(10px, 4.2%, 19px);
-    --frame-hairline: clamp(2.5px, 1%, 4.5px);
-    --frame-inset: calc(var(--frame-outer) + var(--frame-hairline));
-    --notch: polygon(
-      20% 0%, 90% 0%, 94% 4%, 96% 6%, 100% 10%,
-      100% 85%, 95% 90%, 90% 95%, 85% 100%,
-      12% 100%, 8% 96%, 4% 92%, 0% 88%,
-      0% 20%, 7% 13%, 13% 7%
-    );
   }
 
   *{box-sizing:border-box;}
@@ -212,32 +202,29 @@
   .card-face{
     position:relative;
     width:100%; height:100%;
-    overflow:hidden;
-    background: linear-gradient(160deg, #2c0904 0%, #170403 55%, #2c0904 100%);
-    padding: var(--frame-outer);
-    transform: translateZ(calc(var(--card-depth) / 2));
     border-radius: var(--radius);
+    overflow:hidden;
+    background: var(--iron);
+    padding:4px;
+    transform: translateZ(calc(var(--card-depth) / 2));
     box-shadow:
-      0 0 0 1px rgba(10,5,3,0.6),
-      0 0 30px rgba(232,56,13,0.55),
-      0 0 70px rgba(232,56,13,0.3),
+      0 0 0 2px rgba(244,211,94,0.8),
+      0 0 0 3.5px rgba(10,5,3,0.55),
+      0 0 44px rgba(232,56,13,0.4),
       0 22px 44px -14px rgba(0,0,0,0.85),
-      inset 0 1px 0 rgba(255,255,255,0.12),
-      inset 0 -2px 3px rgba(0,0,0,0.4);
-  }
-  .card-hairline{
-    width:100%; height:100%;
-    padding: var(--frame-hairline);
-    clip-path: var(--notch);
+      inset 0 1px 0 rgba(255,255,255,0.5),
+      inset 0 -2px 3px rgba(0,0,0,0.35),
+      inset 2px 0 3px rgba(255,255,255,0.15),
+      inset -2px 0 3px rgba(0,0,0,0.25);
     background-image:
       linear-gradient(135deg, #f4ecd6 0%, #c9ccd0 18%, #8a8f96 32%, #f4ecd6 48%, #b8862f 60%, #8a8f96 78%, #d7dbe0 100%);
   }
   .card-art{
     width:100%; height:100%;
+    border-radius: calc(var(--radius) - 2px);
     overflow:hidden;
     position:relative;
     background: var(--iron);
-    clip-path: var(--notch);
   }
   .card-art .art{
     position:absolute; inset:0;
@@ -248,8 +235,8 @@
 
   /* ---------- Hologram overlays ---------- */
   .holo-sheen{
-    position:absolute; inset: var(--frame-inset);
-    clip-path: var(--notch);
+    position:absolute; inset:4px;
+    border-radius: calc(var(--radius) - 1px);
     transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     background:
       repeating-linear-gradient(115deg,
@@ -269,8 +256,8 @@
     pointer-events:none;
   }
   .holo-glare{
-    position:absolute; inset: var(--frame-inset);
-    clip-path: var(--notch);
+    position:absolute; inset:4px;
+    border-radius: calc(var(--radius) - 1px);
     transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     background: radial-gradient(circle at var(--gx,50%) var(--gy,50%),
       rgba(255,255,255,0.95) 0%,
@@ -293,7 +280,7 @@
   /* Vân hạt (grain) rất nhẹ để bề mặt bớt "sạch" kiểu digital, giống chất liệu in thật */
   .card-grain{
     position:absolute; inset:0;
-    border-radius: var(--radius);
+    border-radius: calc(var(--radius) - 1px);
     transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     opacity:0.05;
     mix-blend-mode: overlay;
@@ -343,8 +330,8 @@
   /* Vệt sáng foil quét chéo qua bề mặt -> đây là yếu tố quan trọng nhất để trông "thật"
      vì nó phản ứng rõ ràng với ánh sáng/góc nhìn, không bị chìm vào ảnh nền sáng như holo tròn */
   .shine-sweep{
-    position:absolute; inset: var(--frame-inset);
-    clip-path: var(--notch);
+    position:absolute; inset:4px;
+    border-radius: calc(var(--radius) - 1px);
     transform: translateZ(calc(var(--card-depth) / 2 + 2px));
     background: linear-gradient(75deg,
       transparent 32%,
@@ -378,7 +365,7 @@
   /* Hạt sáng lấp lánh, xuất hiện ngẫu nhiên khi nghiêng thẻ mạnh -> tăng cảm giác "hiếm/foil" */
   .sparkle-layer{
     position:absolute; inset:0;
-    border-radius: var(--radius);
+    border-radius: calc(var(--radius) - 1px);
     overflow:hidden;
     pointer-events:none;
     transform: translateZ(calc(var(--card-depth) / 2 + 3px));
@@ -426,9 +413,7 @@
         <div class="card-side side-left"></div>
         <div class="card-side side-right"></div>
         <div class="card-face">
-          <div class="card-hairline">
-            <div class="card-art"><div class="art" id="cardArt"></div></div>
-          </div>
+          <div class="card-art"><div class="art" id="cardArt"></div></div>
         </div>
         <div class="shine-sweep" id="shineSweep"></div>
         <div class="holo-sheen" id="holoSheen"></div>
