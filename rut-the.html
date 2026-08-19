@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Rút Thẻ · Hành Trình 2026</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Alfa+Slab+One&family=Anton&family=Barlow:wght@400;500;600;700&family=Bebas+Neue&family=Big+Shoulders+Display:wght@400;700;900&family=IBM+Plex+Mono:wght@400;500;600&family=Playfair+Display:wght@400;700;900&family=Source+Sans+3:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,900&family=Unbounded:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 
   :root{
@@ -38,7 +38,7 @@
     margin:0; padding:0;
     height:100%;
     overflow:hidden;
-    font-family:'Barlow', 'Source Sans 3', sans-serif;
+    font-family:'Unbounded', sans-serif;
     color:var(--text-light);
   }
   html{ background:var(--void); }
@@ -144,7 +144,8 @@
     align-items:center;
     justify-content:center;
     max-width: min(60vw, 420px);
-    font-family:'Anton', 'Big Shoulders Display', sans-serif;
+    font-family:'Fraunces', 'Playfair Display', serif;
+    font-weight:700;
     font-size:11px;
     line-height:1;
     color:var(--void);
@@ -161,8 +162,8 @@
     order:2;
     display:block;
     margin-top:0;
-    font-family:'Anton', 'Big Shoulders Display', 'Playfair Display', sans-serif;
-    font-weight:400;
+    font-family:'Fraunces', 'Playfair Display', serif;
+    font-weight:700;
     font-size:19px;
     color: var(--label-text, var(--text-light));
     letter-spacing:0.02em;
@@ -191,15 +192,16 @@
     transition: opacity 0.45s ease, transform 0.45s ease;
   }
   .eyebrow{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
-    letter-spacing:0.05em;
+    font-family:'Unbounded', sans-serif;
+    font-weight:400;
+    font-size:10px;
+    letter-spacing:0.06em;
     color:var(--flame);
     margin-bottom:10px;
   }
   h1{
-    font-family:'Anton', 'Big Shoulders Display', 'Playfair Display', sans-serif;
-    font-weight:400;
+    font-family:'Fraunces', 'Playfair Display', serif;
+    font-weight:700;
     font-size:clamp(30px, 6vw, 50px);
     margin:0 0 6px;
     letter-spacing:0.02em;
@@ -213,16 +215,19 @@
     filter: drop-shadow(0 2px 18px rgba(232,56,13,0.45));
   }
   .sub{
+    font-family:'Unbounded', sans-serif;
+    font-weight:400;
     color:var(--text-muted);
-    font-size:12px;
-    letter-spacing:0.05em;
+    font-size:10px;
+    letter-spacing:0.06em;
     max-width:520px;
     margin:-6px auto 0;
     line-height:1.6;
   }
   .sub strong{
     color:var(--gold);
-    font-family:'Anton', 'Big Shoulders Display', sans-serif;
+    font-family:'Fraunces', 'Playfair Display', serif;
+    font-weight:700;
     font-size:14px;
     letter-spacing:0.04em;
   }
@@ -333,8 +338,8 @@
     left:50%; bottom: max(38px, calc(env(safe-area-inset-bottom) + 38px));
     transform: translateX(-50%);
     z-index:6;
-    font-family:'Anton', 'Big Shoulders Display', sans-serif;
-    font-weight:400;
+    font-family:'Fraunces', 'Playfair Display', serif;
+    font-weight:700;
     font-size:17px;
     letter-spacing:0.1em;
     text-transform:uppercase;
